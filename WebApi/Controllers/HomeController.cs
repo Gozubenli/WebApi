@@ -16,6 +16,7 @@ namespace WebApi.Controllers
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
+            _logger.LogInformation("HomeController");
         }
 
         public IActionResult Index()
