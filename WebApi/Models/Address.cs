@@ -11,5 +11,6 @@ namespace WebApi.Models
         public string City { get; set; }
         public string Country { get; set; }
         public string Detail { get; set; }
+        public int CustomerId { get; set; }
     }
 }
