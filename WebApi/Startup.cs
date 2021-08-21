@@ -3,38 +3,36 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
+using WebApi.Data;
 using WebApi.Utils;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace WebApi
 {
     public class Startup
     {
-        //public Startup(IConfiguration configuration)
-        //{
-        //    Configuration = configuration;
-        //}
-
-        //public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public Startup(IConfiguration configuration)
         {
-            services.AddControllersWithViews();
+            Configuration = configuration;
         }
 
-        public Microsoft.AspNetCore.Hosting.IHostingEnvironment _hostingEnvironment { get; set; }
-        public Startup(Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment) => _hostingEnvironment = hostingEnvironment;
+        public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void ConfigureServices(IServiceCollection services)
+        {
+            string mySqlConnectionStr = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContextPool<CrmDbContext>(options => options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr)));
+            services.AddAuthorization();            
+            services.AddControllersWithViews().AddNewtonsoftJson();
+        }
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddProvider(new WebApi.Utils.LoggerProvider(_hostingEnvironment));
+            var contentRoot = env.ContentRootPath;
+            loggerFactory.AddProvider(new LoggerProvider(contentRoot));
 
             if (env.IsDevelopment())
             {
@@ -43,7 +41,6 @@ namespace WebApi
             else
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
@@ -52,6 +49,11 @@ namespace WebApi
             app.UseRouting();
 
             app.UseAuthorization();
+            app.UseWhen(x => (x.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)),
+            builder =>
+            {
+                builder.UseMiddleware<AuthenticationMiddleware>();
+            });
 
             app.UseEndpoints(endpoints =>
             {
