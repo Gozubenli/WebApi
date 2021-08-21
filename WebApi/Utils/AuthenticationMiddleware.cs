@@ -30,7 +30,7 @@ namespace WebApi.Utils
                 var username = usernamePassword.Substring(0, seperatorIndex);
                 var password = usernamePassword.Substring(seperatorIndex + 1);
 
-                if (username == "ApiKey" && password == "423b59bd-8834-4c5c-8c6b-0565b1b4c379")
+                if (username == "ApiKey" && password == Singleton.Instance.ApiKey)
                 {
                     await _next.Invoke(context);
                 }

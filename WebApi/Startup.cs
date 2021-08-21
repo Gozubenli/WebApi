@@ -18,7 +18,7 @@ namespace WebApi
         {
             Configuration = configuration;
         }
-
+         
         public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
@@ -27,6 +27,7 @@ namespace WebApi
             services.AddDbContextPool<CrmDbContext>(options => options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr)));
             services.AddAuthorization();            
             services.AddControllersWithViews().AddNewtonsoftJson();
+            services.AddMemoryCache();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -49,6 +50,10 @@ namespace WebApi
             app.UseRouting();
 
             app.UseAuthorization();
+
+            var apiKey = Configuration.GetValue<string>("ApiKey");
+            Singleton.Instance.ApiKey = apiKey;
+
             app.UseWhen(x => (x.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)),
             builder =>
             {
