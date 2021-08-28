@@ -8,6 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApi.Data;
+using WebApi.Models;
+using System.Globalization;
 
 namespace WebApi.Controllers
 {
@@ -16,24 +19,41 @@ namespace WebApi.Controllers
     public class CustomerApiController : ControllerBase
     {
         private readonly ILogger<CustomerApiController> _logger;
-
-        public CustomerApiController(ILogger<CustomerApiController> logger)
+        private CrmDbContext _db;
+        public CustomerApiController(ILogger<CustomerApiController> logger, CrmDbContext db)
         {
             _logger = logger;
-            _logger.LogInformation("CustomerApiController");
+            _db = db;
         }
 
-        [HttpPost("GetCustomerList/{id}")]
-        public void GetCustomerList(int id)
+        [HttpPost("GetCustomerList")]
+        public List<Customer> GetCustomerList([FromBody] JObject param)
         {
-            _logger.LogInformation("GetCustomerList "+id);
+            string s = DateTime.Now.ToString();
+            CultureInfo culture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+            culture.DateTimeFormat.ShortDatePattern = "yyyy-MM-dd";
+            culture.DateTimeFormat.LongTimePattern = "HH:mm:ss";
+            CultureInfo.CurrentCulture = culture;
+            s = DateTime.Now.ToString();
+
+            List<Customer> list = new List<Customer>();
+            list = (from m in _db.Customers select m).ToList();
+            _logger.LogInformation("GetCustomerList Count:" + list.Count);
+            return list;
         }
 
-        [HttpPost("GetCustomerListByJson")]
-        public void GetCustomerListByJson([FromBody] JObject param)
+        [HttpPost("AddCustomer")]
+        public bool AddCustomer([FromBody] Customer customer)
         {
-            string name = param["Name"].ToString();
-            _logger.LogInformation(param.ToString());
+            bool result = false;
+            if (customer != null)
+            {
+                var dbResult = _db.Customers.Add(customer);
+                _db.SaveChanges();
+                result = dbResult != null;
+            }
+            _logger.LogInformation("AddCustomer Result:" + result);
+            return result;
         }
     }
 }

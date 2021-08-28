@@ -30,7 +30,7 @@ namespace WebApi.Utils
         {
             using (StreamWriter streamWriter = new StreamWriter(rootPath+"/log.log", true))
             {
-                await streamWriter.WriteLineAsync($"Log Level : {logLevel.ToString()} | Event ID : {eventId.Id} | Event Name : {eventId.Name} | Formatter : {formatter(state, exception)}");
+                await streamWriter.WriteLineAsync($"{DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss")} | {logLevel.ToString()} \t| {formatter(state, exception)}");
                 streamWriter.Close();
                 await streamWriter.DisposeAsync();
             }
