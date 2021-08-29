@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Utils;
 
-namespace WebApi.Models
+namespace WebApi.DbModels
 {
     public class Work : BaseModel
     {

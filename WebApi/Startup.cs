@@ -29,7 +29,9 @@ namespace WebApi
             services.AddControllersWithViews().AddNewtonsoftJson(options =>
             {
                 options.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
-                options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
+                options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:sszzz";
+                options.UseCamelCasing(true);
+                options.UseMemberCasing();
             });
             services.AddMemoryCache();
             //            services.AddControllers()

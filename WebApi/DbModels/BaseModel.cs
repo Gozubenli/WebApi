@@ -3,45 +3,51 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WebApi.Models
+namespace WebApi.DbModels
 {
     public class BaseModel
     {
         public int Id { get; set; }
 
-        private DateTime createdDate;
+        private DateTime createdDate = DateTime.UtcNow;
         public DateTime CreatedDate
         {
             get
             {
-                if(createdDate == DateTime.MinValue)
+                if (createdDate == DateTime.MinValue)
                 {
-                    createdDate = DateTime.Now;
+                    createdDate = DateTime.UtcNow;
                 }
                 return createdDate;
             }
             set
             {
-                createdDate = value;
+                if (value == DateTime.MinValue)
+                {
+                    createdDate = DateTime.UtcNow;
+                }
             }
         }
 
-        private DateTime updateDate;
+        private DateTime updateDate = DateTime.UtcNow;
         public DateTime UpdateDate
         {
             get
             {
                 if (updateDate == DateTime.MinValue)
                 {
-                    updateDate = DateTime.Now;
+                    updateDate = DateTime.UtcNow;
                 }
                 return updateDate;
             }
             set
             {
-                updateDate = value;
+                if (value == DateTime.MinValue)
+                {
+                    updateDate = DateTime.UtcNow;
+                }
             }
-        }        
+        }
     }
 }
 

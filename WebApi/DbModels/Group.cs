@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WebApi.Models
+namespace WebApi.DbModels
 {
-    public class Category : BaseModel
+    public class Group : BaseModel
     {
         public string Name { get; set; }
-        public int ParentId { get; set; }
     }
 }

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WebApi.Models
+namespace WebApi.DbModels
 {
-    public class Customer : BaseModel
+    public class Employee : BaseModel
     {
         public string Name { get; set; }
         public string Surname { get; set; }

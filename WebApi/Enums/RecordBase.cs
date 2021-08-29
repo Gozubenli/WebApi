@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WebApi.Models
+namespace WebApi.Utils
 {
-    public class Project : BaseModel
+    public enum RecordBase
     {
-        public string Name { get; set; }
+        Crm = 0, Mobile = 1
     }
 }
