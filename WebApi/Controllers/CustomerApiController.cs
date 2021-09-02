@@ -129,7 +129,6 @@ namespace WebApi.Controllers
 
             _logger.LogInformation("AddCustomerProject Result:" + result);
             return result;
-        }
-
+        }       
     }
 }

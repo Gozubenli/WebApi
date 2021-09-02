@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using WebApi.Data;
 using Microsoft.EntityFrameworkCore;
 using WebApi.DbModels;
+using Newtonsoft.Json;
 
 namespace WebApi.Controllers
 {
@@ -43,6 +44,7 @@ namespace WebApi.Controllers
         [HttpPost("AddAddress")]
         public async Task<bool> AddAddress([FromBody] Address address)
         {
+            _logger.LogInformation("Address:" + JsonConvert.SerializeObject(address));
             bool result = false;
             if (address != null)
             {
