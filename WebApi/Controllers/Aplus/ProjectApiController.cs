@@ -10,9 +10,9 @@ using WebApi.Data;
 using Microsoft.EntityFrameworkCore;
 using WebApi.DbModels;
 
-namespace WebApi.Controllers
+namespace WebApi.Aplus.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("aplus/[controller]")]
     [ApiController]
     public class ProjectApiController : ControllerBase
     {
@@ -27,6 +27,7 @@ namespace WebApi.Controllers
         [HttpPost("GetProjectList")]
         public async Task<List<Project>> GetProjectList([FromBody] JObject param)
         {
+            Dictionary<string, string> a = new Dictionary<string, string>();
             List<Project> list = new List<Project>();
             try
             {

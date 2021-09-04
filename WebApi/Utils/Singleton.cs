@@ -21,6 +21,6 @@ namespace WebApi.Utils
                 return instance;
             }
         }
-        public string ApiKey { get; set; }
+        public Dictionary<string, string> ApiKey { get; set; } = new Dictionary<string, string>();
     }
 }

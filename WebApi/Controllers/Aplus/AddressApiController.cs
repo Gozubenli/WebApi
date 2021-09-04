@@ -11,9 +11,9 @@ using Microsoft.EntityFrameworkCore;
 using WebApi.DbModels;
 using Newtonsoft.Json;
 
-namespace WebApi.Controllers
+namespace WebApi.Aplus.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("aplus/[controller]")]
     [ApiController]
     public class AddressApiController : ControllerBase
     {
@@ -67,7 +67,7 @@ namespace WebApi.Controllers
         public async Task<List<Address>> GetAddressListByCustomerId([FromBody] JObject param)
         {
             List<Address> list = new List<Address>();
-            
+            _logger.LogInformation("GetAddressListByCustomerId");
             try
             {
                 if(param["CustomerId"] != null)
@@ -81,6 +81,7 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
             }
             return list;
         }

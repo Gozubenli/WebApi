@@ -34,11 +34,6 @@ namespace WebApi
                 options.UseMemberCasing();
             });
             services.AddMemoryCache();
-            //            services.AddControllers()
-            //.AddJsonOptions(options =>
-            //{
-            //    options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
-            //});
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -60,14 +55,19 @@ namespace WebApi
             app.UseRouting();
             app.UseAuthorization();
 
-            var apiKey = Configuration.GetValue<string>("ApiKey");
-            Singleton.Instance.ApiKey = apiKey;
-
-            app.UseWhen(x => (x.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)),
-            builder =>
+            string apiKeys = Configuration.GetValue<string>("ApiKeys");
+            foreach (var userKey in apiKeys.Split(";"))
             {
+                string user = userKey.Split(":")[0];
+                string key = userKey.Split(":")[1];
+                Singleton.Instance.ApiKey.Add(user, key);
+            } 
+
+            app.UseWhen(x => (x.Request.Path.Value.ToLower().Contains("api/")), //,  .StartsWithSegments("/aplus", StringComparison.OrdinalIgnoreCase)),
+            builder =>
+            {                
                 builder.UseMiddleware<AuthenticationMiddleware>();
-            });
+            });           
 
             app.UseEndpoints(endpoints =>
             {

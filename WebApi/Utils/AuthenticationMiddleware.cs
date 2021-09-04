@@ -15,7 +15,6 @@ namespace WebApi.Utils
         {
             _next = next;
         }
-
         public async Task Invoke(HttpContext context)
         {
             string authHeader = context.Request.Headers["Authorization"];
@@ -30,7 +29,8 @@ namespace WebApi.Utils
                 var username = usernamePassword.Substring(0, seperatorIndex);
                 var password = usernamePassword.Substring(seperatorIndex + 1);
 
-                if (username == "ApiKey" && password == Singleton.Instance.ApiKey)
+                //if (username == "ApiKey" && password == Singleton.Instance.ApiKey)
+                if(Singleton.Instance.ApiKey.Keys.Contains(username) && Singleton.Instance.ApiKey[username]== password)
                 {
                     await _next.Invoke(context);
                 }

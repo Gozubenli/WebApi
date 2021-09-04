@@ -14,9 +14,9 @@ using Microsoft.EntityFrameworkCore;
 using WebApi.DbModels;
 using WebApi.UiModels;
 
-namespace WebApi.Controllers
+namespace WebApi.Aplus.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("aplus/[controller]")]
     [ApiController]
     public class CustomerApiController : ControllerBase
     {
@@ -48,7 +48,6 @@ namespace WebApi.Controllers
         public async Task<List<UiCustomerModel>> GetCustomerModelList([FromBody] JObject param)
         {
             List<UiCustomerModel> resultList = new List<UiCustomerModel>();
-
             try
             {
                 var list = await (from m in _db.Customers
