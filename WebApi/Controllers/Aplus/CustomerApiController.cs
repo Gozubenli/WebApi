@@ -13,6 +13,7 @@ using System.Net;
 using Microsoft.EntityFrameworkCore;
 using WebApi.DbModels;
 using WebApi.UiModels;
+using Newtonsoft.Json;
 
 namespace WebApi.Aplus.Controllers
 {
@@ -90,6 +91,8 @@ namespace WebApi.Aplus.Controllers
             {
                 try
                 {
+                    customer.CreatedDate = DateTime.UtcNow;
+                    customer.UpdateDate = DateTime.UtcNow;
                     var dbResult = _db.Customers.Add(customer);
                     await _db.SaveChangesAsync();
                     result = dbResult != null;
@@ -100,6 +103,42 @@ namespace WebApi.Aplus.Controllers
                 }
             }
             _logger.LogInformation("AddCustomer Result:" + result);
+            return result;
+        }
+
+        [HttpPost("UpdateCustomer")]
+        public async Task<bool> UpdateCustomer([FromBody] Customer customer)
+        {
+            _logger.LogInformation("UpdateCustomer: " + JsonConvert.SerializeObject(customer));
+            bool result = false;
+            if (customer != null)
+            {
+                try
+                {
+                    var existing = _db.Customers.FirstOrDefault(o => o.Id == customer.Id);
+                    if (existing != null)
+                    {
+                        existing.Name = customer.Name;
+                        existing.Surname = customer.Surname;
+                        existing.UserName = customer.UserName;
+                        existing.Email = customer.Email;
+                        existing.Telephone = customer.Telephone;
+                        existing.RecordBase = customer.RecordBase;
+                        existing.UpdateDate = DateTime.UtcNow;
+                        int dbResult = await _db.SaveChangesAsync();
+                        result = dbResult > 0;
+                    }
+                    else
+                    {
+                        _logger.LogError("UpdateCustomer Not Found");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+            }
+            _logger.LogInformation("UpdateCustomer Result:" + result);
             return result;
         }
 

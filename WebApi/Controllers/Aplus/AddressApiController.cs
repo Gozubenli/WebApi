@@ -44,12 +44,14 @@ namespace WebApi.Aplus.Controllers
         [HttpPost("AddAddress")]
         public async Task<bool> AddAddress([FromBody] Address address)
         {
-            _logger.LogInformation("Address:" + JsonConvert.SerializeObject(address));
+            _logger.LogInformation("Address: " + JsonConvert.SerializeObject(address));
             bool result = false;
             if (address != null)
             {
                 try
                 {
+                    address.CreatedDate = DateTime.UtcNow;
+                    address.UpdateDate = DateTime.UtcNow;
                     var dbResult = _db.Address.Add(address);
                     await _db.SaveChangesAsync();
                     result = dbResult != null;
@@ -63,6 +65,41 @@ namespace WebApi.Aplus.Controllers
             return result;
         }
 
+        [HttpPost("UpdateAddress")]
+        public async Task<bool> UpdateAddress([FromBody] Address address)
+        {
+            _logger.LogInformation("UpdateAddress: " + JsonConvert.SerializeObject(address));
+            bool result = false;
+            if (address != null)
+            {
+                try
+                {
+                    var existing = _db.Address.FirstOrDefault(o => o.Id == address.Id);
+                    if(existing != null)
+                    {
+                        existing.Name = address.Name;
+                        existing.City = address.City;
+                        existing.Country = address.Country;
+                        existing.CustomerId = address.CustomerId;
+                        existing.Detail = address.Detail;
+                        existing.UpdateDate = DateTime.UtcNow;
+                        int dbResult = await _db.SaveChangesAsync();
+                        result = dbResult > 0;
+                    }
+                    else
+                    {
+                        _logger.LogError("UpdateAddress Not Found");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+            }
+            _logger.LogInformation("UpdateAddress Result:" + result);
+            return result;
+        }
+
         [HttpPost("GetAddressListByCustomerId")]
         public async Task<List<Address>> GetAddressListByCustomerId([FromBody] JObject param)
         {
@@ -70,13 +107,14 @@ namespace WebApi.Aplus.Controllers
             _logger.LogInformation("GetAddressListByCustomerId");
             try
             {
-                if(param["CustomerId"] != null)
+                if (param["CustomerId"] != null)
                 {
                     int customerId = Convert.ToInt32(param["CustomerId"]);
                     list = await (from m in _db.Address
-                                  where m.CustomerId == customerId select m).ToListAsync();
+                                  where m.CustomerId == customerId
+                                  select m).ToListAsync();
                     _logger.LogInformation("GetAddressList Count:" + list.Count);
-                }                
+                }
             }
             catch (Exception ex)
             {
