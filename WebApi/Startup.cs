@@ -34,6 +34,7 @@ namespace WebApi
                 options.UseMemberCasing();
             });
             services.AddMemoryCache();
+            services.AddCors();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -54,6 +55,11 @@ namespace WebApi
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthorization();
+            app.UseCors(x => x
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .SetIsOriginAllowed(origin => true)
+               .AllowCredentials());
 
             string apiKeys = Configuration.GetValue<string>("ApiKeys");
             foreach (var userKey in apiKeys.Split(";"))

@@ -22,7 +22,9 @@ namespace WebApi.Data
         public DbSet<Work> Works { get; set; }
         public DbSet<Customer_Project> Customer_Projects { get; set; }
         public DbSet<Employee_Group> Employee_Groups { get; set; }
-
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<User_Role> User_Roles { get; set; }
         public CrmDbContext(DbContextOptions<CrmDbContext> options) : base(options)
         {
         }

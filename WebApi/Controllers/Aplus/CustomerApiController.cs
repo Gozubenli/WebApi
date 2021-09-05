@@ -48,6 +48,7 @@ namespace WebApi.Aplus.Controllers
         [HttpPost("GetCustomerModelList")]
         public async Task<List<UiCustomerModel>> GetCustomerModelList([FromBody] JObject param)
         {
+            _logger.LogInformation("GetCustomerModelList");
             List<UiCustomerModel> resultList = new List<UiCustomerModel>();
             try
             {
@@ -74,6 +75,11 @@ namespace WebApi.Aplus.Controllers
                         AddressList = item.addressList
                     });
                 }
+                //Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                //Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+                //Response.Headers.Add("Access-Control-Allow-Headers", "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,locale,Access-Control-Allow-Origin,Accept");
+                //Response.Headers.Add("Access-Control-Allow-Methods", "POST, OPTIONS");
+
             }
             catch (Exception ex)
             {

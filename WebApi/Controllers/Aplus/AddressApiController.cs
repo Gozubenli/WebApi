@@ -100,6 +100,36 @@ namespace WebApi.Aplus.Controllers
             return result;
         }
 
+        [HttpPost("DeleteAddress")]
+        public async Task<bool> DeleteAddress([FromBody] Address address)
+        {
+            _logger.LogInformation("DeleteAddress: " + JsonConvert.SerializeObject(address));
+            bool result = false;
+            if (address != null)
+            {
+                try
+                {
+                    var existing = _db.Address.FirstOrDefault(o => o.Id == address.Id);
+                    if (existing != null)
+                    {
+                        _db.Address.Remove(existing);
+                        int dbResult = await _db.SaveChangesAsync();
+                        result = dbResult > 0;
+                    }
+                    else
+                    {
+                        _logger.LogError("DeleteAddress Not Found");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+            }
+            _logger.LogInformation("DeleteAddress Result:" + result);
+            return result;
+        }
+
         [HttpPost("GetAddressListByCustomerId")]
         public async Task<List<Address>> GetAddressListByCustomerId([FromBody] JObject param)
         {
