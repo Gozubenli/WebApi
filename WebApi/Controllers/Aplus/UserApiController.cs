@@ -144,6 +144,7 @@ namespace WebApi.Aplus.Controllers
             {
                 if (userName != null && password != null)
                 {
+                    //string pass = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(password.ToString()));
                     User user = await (from m in _db.Users where m.UserName == userName.ToString() && m.Password == password.ToString() select m).FirstOrDefaultAsync();
                     if (user != null)
                     {
