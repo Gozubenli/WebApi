@@ -26,6 +26,10 @@ namespace WebApi.DbModels
                 {
                     createdDate = DateTime.UtcNow;
                 }
+                else
+                {
+                    createdDate = value;
+                }
             }
         }
 
@@ -45,6 +49,10 @@ namespace WebApi.DbModels
                 if (value == DateTime.MinValue)
                 {
                     updateDate = DateTime.UtcNow;
+                }
+                else
+                {
+                    updateDate = value;
                 }
             }
         }

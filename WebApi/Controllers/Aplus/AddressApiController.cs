@@ -10,6 +10,8 @@ using WebApi.Data;
 using Microsoft.EntityFrameworkCore;
 using WebApi.DbModels;
 using Newtonsoft.Json;
+using WebApi.Utils;
+using Microsoft.AspNetCore.Http;
 
 namespace WebApi.Aplus.Controllers
 {
@@ -19,10 +21,12 @@ namespace WebApi.Aplus.Controllers
     {
         private readonly ILogger<AddressApiController> _logger;
         private CrmDbContext _db;
+        private DbLogger _dbLogger;
         public AddressApiController(ILogger<AddressApiController> logger, CrmDbContext db)
         {
             _logger = logger;
             _db = db;
+            _dbLogger = new DbLogger(_db);
         }
 
         [HttpPost("GetAddressList")]
@@ -48,8 +52,10 @@ namespace WebApi.Aplus.Controllers
             bool result = false;
             if (address != null)
             {
+                Customer customer = null;
                 try
                 {
+                    customer = _db.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
                     address.CreatedDate = DateTime.UtcNow;
                     address.UpdateDate = DateTime.UtcNow;
                     var dbResult = _db.Address.Add(address);
@@ -60,20 +66,26 @@ namespace WebApi.Aplus.Controllers
                 {
                     _logger.LogError(ex.Message);
                 }
+                if(customer != null)
+                {
+                    string message = "Address " + address.Name + (result ? " Added" : "Could Not Added") + " To Customer " + customer.Name + " " + customer.Surname;
+                    _logger.LogInformation("AddAddress\tParam: " + JsonConvert.SerializeObject(address) + "\tResult: " + result);
+                    await _dbLogger.logInfo(message, getUserName());
+                }                
             }
-            _logger.LogInformation("AddAddress Result:" + result);
             return result;
         }
 
         [HttpPost("UpdateAddress")]
         public async Task<bool> UpdateAddress([FromBody] Address address)
         {
-            _logger.LogInformation("UpdateAddress: " + JsonConvert.SerializeObject(address));
             bool result = false;
             if (address != null)
             {
+                Customer customer = null;
                 try
                 {
+                    customer = _db.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
                     var existing = _db.Address.FirstOrDefault(o => o.Id == address.Id);
                     if(existing != null)
                     {
@@ -95,6 +107,12 @@ namespace WebApi.Aplus.Controllers
                 {
                     _logger.LogError(ex.Message);
                 }
+                if (customer != null)
+                {
+                    string message = "Address " + address.Name + (result ? " Updated" : "Could Not Updated") + " For Customer " + customer.Name + " " + customer.Surname;
+                    _logger.LogInformation("UpdateAddress\tParam: " + JsonConvert.SerializeObject(address) + "\tResult: " + result);
+                    await _dbLogger.logInfo(message, getUserName());
+                }
             }
             _logger.LogInformation("UpdateAddress Result:" + result);
             return result;
@@ -103,12 +121,13 @@ namespace WebApi.Aplus.Controllers
         [HttpPost("DeleteAddress")]
         public async Task<bool> DeleteAddress([FromBody] Address address)
         {
-            _logger.LogInformation("DeleteAddress: " + JsonConvert.SerializeObject(address));
             bool result = false;
             if (address != null)
             {
+                Customer customer = null;
                 try
                 {
+                    customer = _db.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
                     var existing = _db.Address.FirstOrDefault(o => o.Id == address.Id);
                     if (existing != null)
                     {
@@ -125,8 +144,13 @@ namespace WebApi.Aplus.Controllers
                 {
                     _logger.LogError(ex.Message);
                 }
+                if (customer != null)
+                {
+                    string message = "Address " + address.Name + (result ? " Deleted" : "Could Not Deleted") + " From Customer " + customer.Name + " " + customer.Surname;
+                    _logger.LogInformation("DeleteAddress\tParam: " + JsonConvert.SerializeObject(address) + "\tResult: " + result);
+                    await _dbLogger.logInfo(message, getUserName());
+                }
             }
-            _logger.LogInformation("DeleteAddress Result:" + result);
             return result;
         }
 
@@ -152,6 +176,10 @@ namespace WebApi.Aplus.Controllers
                 _logger.LogError(ex.StackTrace);
             }
             return list;
+        }
+        private string getUserName()
+        {
+            return HttpContext.Session.GetString("UserName");
         }
     }
 }

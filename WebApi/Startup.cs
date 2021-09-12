@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,6 +8,9 @@ using WebApi.Data;
 using WebApi.Utils;
 using Microsoft.EntityFrameworkCore;
 using System;
+using WebApi.DbModels;
+using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
 
 namespace WebApi
 {
@@ -33,11 +35,14 @@ namespace WebApi
                 options.UseCamelCasing(true);
                 options.UseMemberCasing();
             });
+            //services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<CrmDbContext>().AddDefaultTokenProviders();
+            //services.AddIdentity<ApplicationUser, ApplicationRole>().AddDefaultTokenProviders();
             services.AddMemoryCache();
             services.AddCors();
+            services.AddSession();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
         {
             var contentRoot = env.ContentRootPath;
             loggerFactory.AddProvider(new LoggerProvider(contentRoot));
@@ -51,10 +56,12 @@ namespace WebApi
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthorization();
+            app.UseSession();
             app.UseCors(x => x
                .AllowAnyMethod()
                .AllowAnyHeader()
@@ -67,13 +74,13 @@ namespace WebApi
                 string user = userKey.Split(":")[0];
                 string key = userKey.Split(":")[1];
                 Singleton.Instance.ApiKey.Add(user, key);
-            } 
+            }
 
             app.UseWhen(x => (x.Request.Path.Value.ToLower().Contains("api/")), //,  .StartsWithSegments("/aplus", StringComparison.OrdinalIgnoreCase)),
             builder =>
-            {                
+            {
                 builder.UseMiddleware<AuthenticationMiddleware>();
-            });           
+            });
 
             app.UseEndpoints(endpoints =>
             {
@@ -81,6 +88,52 @@ namespace WebApi
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            //CreateRoles(serviceProvider);
         }
+
+        //private void CreateRoles(IServiceProvider serviceProvider)
+        //{
+        //    var RoleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+        //    var UserManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        //    //serviceProvider.GetRequiredService<UserRoleManager>
+
+        //    string[] roleNames = { "Admin", "Manager", "Member" };
+        //    IdentityResult roleResult;
+
+        //    foreach (var roleName in roleNames)
+        //    {
+        //        var roleExist = RoleManager.RoleExistsAsync(roleName).Result;
+        //        if (!roleExist)
+        //        {
+        //            roleResult = RoleManager.CreateAsync(new ApplicationRole()
+        //            {
+        //                Name = roleName
+        //            }).Result;
+        //        }
+        //    }
+
+        //    //Here you could create a super user who will maintain the web app
+        //    var poweruser = new ApplicationUser
+        //    {
+
+        //        UserName = "Admin",
+        //        Email = "admin@webapptr.com",
+        //    };
+
+        //    string userPWD = "Admin_1.";
+        //    var _user = UserManager.FindByEmailAsync("admin@webapptr.com").Result;
+
+        //    if (_user == null)
+        //    {
+        //        var createPowerUser = UserManager.CreateAsync(poweruser, userPWD).Result;
+        //        if (createPowerUser.Succeeded)
+        //        {
+        //            //var v = UserManager.AddToRoleAsync(poweruser, "Admin").Result;
+        //        }
+               
+        //    }
+        //    var v = UserManager.AddToRoleAsync(poweruser, "Admin").Result;
+        //}
     }
 }

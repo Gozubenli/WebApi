@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using WebApi.DbModels;
 using Newtonsoft.Json;
 using WebApi.UiModels;
+using Microsoft.AspNetCore.Http;
+using WebApi.Utils;
 
 namespace WebApi.Aplus.Controllers
 {
@@ -20,10 +22,12 @@ namespace WebApi.Aplus.Controllers
     {
         private readonly ILogger<AddressApiController> _logger;
         private CrmDbContext _db;
+        private DbLogger _dbLogger;
         public UserApiController(ILogger<AddressApiController> logger, CrmDbContext db)
         {
             _logger = logger;
             _db = db;
+            _dbLogger = new DbLogger(_db);
         }
 
         [HttpPost("GetUserList")]
@@ -45,7 +49,6 @@ namespace WebApi.Aplus.Controllers
         [HttpPost("AddUser")]
         public async Task<bool> AddUser([FromBody] User user)
         {
-            _logger.LogInformation("User: " + JsonConvert.SerializeObject(user));
             bool result = false;
             if (user != null)
             {
@@ -61,6 +64,9 @@ namespace WebApi.Aplus.Controllers
                 {
                     _logger.LogError(ex.Message);
                 }
+                string message = "User " + user.Name + (result ? " Added" : "Could Not Added");
+                _logger.LogInformation("AddUser\tParam: " + JsonConvert.SerializeObject(user) + "\tResult: " + result);
+                await _dbLogger.logInfo(message, getUserName());
             }
             _logger.LogInformation("AddUser Result:" + result);
             return result;
@@ -69,7 +75,6 @@ namespace WebApi.Aplus.Controllers
         [HttpPost("UpdateUser")]
         public async Task<bool> UpdateUser([FromBody] User user)
         {
-            _logger.LogInformation("UpdateUser: " + JsonConvert.SerializeObject(user));
             bool result = false;
             if (user != null)
             {
@@ -98,15 +103,16 @@ namespace WebApi.Aplus.Controllers
                 {
                     _logger.LogError(ex.Message);
                 }
+                string message = "User " + user.Name + (result ? " Updated" : "Could Not Updated");
+                _logger.LogInformation("UpdateUser\tParam: " + JsonConvert.SerializeObject(user) + "\tResult: " + result);
+                await _dbLogger.logInfo(message, getUserName());
             }
-            _logger.LogInformation("UpdateUser Result:" + result);
             return result;
         }
 
         [HttpPost("DeleteUser")]
         public async Task<bool> DeleteUser([FromBody] User user)
         {
-            _logger.LogInformation("DeleteUser: " + JsonConvert.SerializeObject(user));
             bool result = false;
             if (user != null)
             {
@@ -128,8 +134,10 @@ namespace WebApi.Aplus.Controllers
                 {
                     _logger.LogError(ex.Message);
                 }
+                string message = "User " + user.Name + (result ? " Deleted" : "Could Not Deleted");
+                _logger.LogInformation("DeleteUser\tParam: " + JsonConvert.SerializeObject(user) + "\tResult: " + result);
+                await _dbLogger.logInfo(message, getUserName());
             }
-            _logger.LogInformation("DeleteUser Result:" + result);
             return result;
         }
 
@@ -144,7 +152,6 @@ namespace WebApi.Aplus.Controllers
             {
                 if (userName != null && password != null)
                 {
-                    //string pass = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(password.ToString()));
                     User user = await (from m in _db.Users where m.UserName == userName.ToString() && m.Password == password.ToString() select m).FirstOrDefaultAsync();
                     if (user != null)
                     {
@@ -156,17 +163,24 @@ namespace WebApi.Aplus.Controllers
                                                  where mn.UserId == user.Id
                                                  select m).ToListAsync();
                         _logger.LogInformation("Login " + userName.ToString());
+
+                        string message = "User " + userName + " Logged In";
+                        _logger.LogInformation("Login\tParam: " + JsonConvert.SerializeObject(user) + "\tLogged In");
+                        await _dbLogger.logInfo(message, getUserName());
                     }
                     else
                     {
-                        _logger.LogError("Login Error " + userName.ToString());
+                        string message = "User " + userName + " Could Not Logged In";
+                        _logger.LogInformation("Login\tParam: " + JsonConvert.SerializeObject(param) + "\tCould Not Logged In");
+                        await _dbLogger.logInfo(message, getUserName());
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
             }
+            
             return result;
         }
 
@@ -287,6 +301,10 @@ namespace WebApi.Aplus.Controllers
                 _logger.LogError(ex.Message);
             }
             return true;
+        }
+        private string getUserName()
+        {
+            return HttpContext.Session.GetString("UserName");
         }
     }
 }

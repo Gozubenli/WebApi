@@ -5,11 +5,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApi.Data;
 
 namespace WebApi.Utils
 {
     public class Logger : ILogger
-    {
+    {        
         string rootPath = "";
         public Logger(string path)
         {
@@ -33,7 +34,7 @@ namespace WebApi.Utils
                 await streamWriter.WriteLineAsync($"{DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss")} | {logLevel.ToString()} \t| {formatter(state, exception)}");
                 streamWriter.Close();
                 await streamWriter.DisposeAsync();
-            }
+            }            
         }
     }
 }

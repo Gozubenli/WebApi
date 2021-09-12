@@ -1,7 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,14 +28,24 @@ namespace WebApi.Utils
                 Encoding encoding = Encoding.GetEncoding("iso-8859-1");
                 string usernamePassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
 
+                var arr = usernamePassword.Split(":");
+
                 int seperatorIndex = usernamePassword.IndexOf(':');
 
-                var username = usernamePassword.Substring(0, seperatorIndex);
-                var password = usernamePassword.Substring(seperatorIndex + 1);
+                var apiName = arr[0]; // usernamePassword.Substring(0, seperatorIndex);
+                var apikey = arr[1]; // usernamePassword.Substring(seperatorIndex + 1);
 
-                //if (username == "ApiKey" && password == Singleton.Instance.ApiKey)
-                if(Singleton.Instance.ApiKey.Keys.Contains(username) && Singleton.Instance.ApiKey[username]== password)
+                if(arr.Length==3)
                 {
+                    context.Session.SetString("UserName", arr[2]);
+                }
+                else
+                {
+                    context.Session.SetString("UserName", "");
+                }
+
+                if (Singleton.Instance.ApiKey.Keys.Contains(apiName) && Singleton.Instance.ApiKey[apiName] == apikey)
+                {                    
                     await _next.Invoke(context);
                 }
                 else
@@ -46,5 +60,32 @@ namespace WebApi.Utils
                 return;
             }
         }
+
+        //private async Task SignIn(string username, HttpContext context)
+        //{
+        //    var claims = new List<Claim>
+        //    {
+        //        new Claim(ClaimTypes.Name, username)
+        //    };
+        //    claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+        //    claims.Add(new Claim(ClaimTypes.Role, "Moderator"));
+
+        //    var identity = new ClaimsIdentity(
+        //        claims,
+        //        CookieAuthenticationDefaults.AuthenticationScheme,
+        //        ClaimTypes.Name,
+        //        ClaimTypes.Role
+        //    );
+
+        //    await context.SignInAsync(
+        //        CookieAuthenticationDefaults.AuthenticationScheme,
+        //        new ClaimsPrincipal(identity),
+        //        new AuthenticationProperties
+        //        {
+        //            IsPersistent = true,
+        //            ExpiresUtc = DateTime.UtcNow.AddMonths(1)
+        //        }
+        //    );
+        //}
     }
 }
