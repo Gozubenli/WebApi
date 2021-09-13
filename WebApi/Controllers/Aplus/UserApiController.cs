@@ -196,7 +196,7 @@ namespace WebApi.Aplus.Controllers
                     {
                         string message = "User " + userName + " Could Not Logged In";
                         _logger.LogInformation("Login\tParam: " + JsonConvert.SerializeObject(param) + "\tCould Not Logged In");
-                        await _dbLogger.logInfo(message, userName);
+                        await _dbLogger.logInfo(message, userName.ToString());
                     }
                 }
             }
