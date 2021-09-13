@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 using WebApi.UiModels;
 using Microsoft.AspNetCore.Http;
 using WebApi.Utils;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace WebApi.Aplus.Controllers
 {
@@ -20,14 +22,14 @@ namespace WebApi.Aplus.Controllers
     [ApiController]
     public class UserApiController : ControllerBase
     {
-        private readonly ILogger<AddressApiController> _logger;
-        private CrmDbContext _db;
+        private readonly ILogger<AddressApiController> _logger;        
+        private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
-        public UserApiController(ILogger<AddressApiController> logger, CrmDbContext db)
+        public UserApiController(ILogger<AddressApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
-            _logger = logger;
-            _db = db;
-            _dbLogger = new DbLogger(_db);
+            _logger = logger;           
+            _contextFactory = contextFactory;
+            _dbLogger = new DbLogger(_contextFactory);
         }
 
         [HttpPost("GetUserList")]
@@ -36,7 +38,11 @@ namespace WebApi.Aplus.Controllers
             List<User> list = new List<User>();
             try
             {
-                list = await (from m in _db.Users select m).ToListAsync();
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    list = await (from m in context.Users select m).ToListAsync();
+                }
+
                 _logger.LogInformation("GetUserList Count:" + list.Count);
             }
             catch (Exception ex)
@@ -56,9 +62,12 @@ namespace WebApi.Aplus.Controllers
                 {
                     user.CreatedDate = DateTime.UtcNow;
                     user.UpdateDate = DateTime.UtcNow;
-                    var dbResult = _db.Users.Add(user);
-                    await _db.SaveChangesAsync();
-                    result = dbResult != null;
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        var dbResult = context.Users.Add(user);
+                        await context.SaveChangesAsync();
+                        result = dbResult != null;
+                    }                    
                 }
                 catch (Exception ex)
                 {
@@ -80,23 +89,26 @@ namespace WebApi.Aplus.Controllers
             {
                 try
                 {
-                    var existing = _db.Users.FirstOrDefault(o => o.Id == user.Id);
-                    if (existing != null)
+                    using (var context = _contextFactory.CreateDbContext())
                     {
-                        existing.Name = user.Name;
-                        existing.SurName = user.SurName;
-                        existing.UserName = user.UserName;
-                        existing.Email = user.Email;
-                        existing.Phone = user.Phone;
-                        existing.Password = user.Password;
-                        existing.Status = user.Status;
-                        existing.UpdateDate = DateTime.UtcNow;
-                        int dbResult = await _db.SaveChangesAsync();
-                        result = dbResult > 0;
-                    }
-                    else
-                    {
-                        _logger.LogError("UpdateUser Not Found");
+                        var existing = context.Users.FirstOrDefault(o => o.Id == user.Id);
+                        if (existing != null)
+                        {
+                            existing.Name = user.Name;
+                            existing.SurName = user.SurName;
+                            existing.UserName = user.UserName;
+                            existing.Email = user.Email;
+                            existing.Phone = user.Phone;
+                            existing.Password = user.Password;
+                            existing.Status = user.Status;
+                            existing.UpdateDate = DateTime.UtcNow;
+                            int dbResult = await context.SaveChangesAsync();
+                            result = dbResult > 0;
+                        }
+                        else
+                        {
+                            _logger.LogError("UpdateUser Not Found");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -118,16 +130,19 @@ namespace WebApi.Aplus.Controllers
             {
                 try
                 {
-                    var existing = _db.Users.FirstOrDefault(o => o.Id == user.Id);
-                    if (existing != null)
+                    using (var context = _contextFactory.CreateDbContext())
                     {
-                        _db.Users.Remove(existing);
-                        int dbResult = await _db.SaveChangesAsync();
-                        result = dbResult > 0;
-                    }
-                    else
-                    {
-                        _logger.LogError("DeleteUser Not Found");
+                        var existing = context.Users.FirstOrDefault(o => o.Id == user.Id);
+                        if (existing != null)
+                        {
+                            context.Users.Remove(existing);
+                            int dbResult = await context.SaveChangesAsync();
+                            result = dbResult > 0;
+                        }
+                        else
+                        {
+                            _logger.LogError("DeleteUser Not Found");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -152,16 +167,25 @@ namespace WebApi.Aplus.Controllers
             {
                 if (userName != null && password != null)
                 {
-                    User user = await (from m in _db.Users where m.UserName == userName.ToString() && m.Password == password.ToString() select m).FirstOrDefaultAsync();
+                    User user = null;
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        user = await (from m in context.Users where m.UserName == userName.ToString() && m.Password == password.ToString() select m).FirstOrDefaultAsync();
+                    }
+
                     if (user != null)
                     {
-                        user.Password = "";
                         result = new UiUserModel();
+                        user.Password = "";
                         result.User = user;
-                        result.RoleList = await (from m in _db.Roles
-                                                 join mn in _db.User_Roles on m.Id equals mn.RoleId
-                                                 where mn.UserId == user.Id
-                                                 select m).ToListAsync();
+
+                        using (var context = _contextFactory.CreateDbContext())
+                        {
+                            result.RoleList = await (from m in context.Roles
+                                                     join mn in context.User_Roles on m.Id equals mn.RoleId
+                                                     where mn.UserId == user.Id
+                                                     select m).ToListAsync();
+                        }
                         _logger.LogInformation("Login " + userName.ToString());
 
                         string message = "User " + userName + " Logged In";
@@ -172,7 +196,7 @@ namespace WebApi.Aplus.Controllers
                     {
                         string message = "User " + userName + " Could Not Logged In";
                         _logger.LogInformation("Login\tParam: " + JsonConvert.SerializeObject(param) + "\tCould Not Logged In");
-                        await _dbLogger.logInfo(message, getUserName());
+                        await _dbLogger.logInfo(message, userName);
                     }
                 }
             }
@@ -180,8 +204,33 @@ namespace WebApi.Aplus.Controllers
             {
                 _logger.LogError(ex.StackTrace);
             }
-            
+
             return result;
+        }
+
+        [HttpPost("GetData")]
+        public async Task<List<User>> GetData()
+        {
+            List<User> userList = new List<User>();
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri("https://jsonplaceholder.typicode.com");
+
+            // Add an Accept header for JSON format.
+            client.DefaultRequestHeaders.Accept.Add(
+            new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // List data response.
+            HttpResponseMessage response = client.GetAsync("/users").Result;  // Blocking call! Program will wait here until a response is received or a timeout occurs.
+            if (response.IsSuccessStatusCode)
+            {
+                userList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<User>>(response.Content.ReadAsStringAsync().Result);
+            }
+            else
+            {
+                Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
+            }
+            client.Dispose();
+            return userList;
         }
 
         [HttpPost("TestData")]
@@ -189,111 +238,128 @@ namespace WebApi.Aplus.Controllers
         {
             try
             {
-                _db.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Roles");
-                _db.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Projects");
-                _db.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Users");
-                _db.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Customers");
-                _db.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Address");
-                _db.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Customer_Projects");
-
-
-
-                Role role1 = new Role()
+                using (var context = _contextFactory.CreateDbContext())
                 {
-                    Name = "Admin",
-                    Description = "Administrator"
-                };
-                Role role2 = new Role()
-                {
-                    Name = "Standart",
-                    Description = "Standart"
-                };
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Roles");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Projects");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Users");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Customers");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Address");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Customer_Projects");
 
-                _db.Roles.Add(role1);
-                _db.Roles.Add(role2);
 
-                Project project1 = new Project()
-                {
-                    Name = "Project1",
-                    Description = "Description1"
-                };
 
-                Project project2 = new Project()
-                {
-                    Name = "Project2",
-                    Description = "Description2"
-                };
-
-                _db.Projects.Add(project1);
-                _db.Projects.Add(project2);
-
-                for (int i = 1; i < 11; i++)
-                {
-                    User user = new User()
+                    Role role1 = new Role()
                     {
-                        Name = "Name" + i,
-                        SurName = "SurName" + i,
-                        Email = "email" + i + "@email.com",
-                        Password = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(i.ToString())),
-                        Phone = "971000000" + i,
-                        Status = 1,
-                        UserName = "UserName" + i,
+                        Name = "Admin",
+                        Description = "Administrator"
                     };
-                    _db.Users.Add(user);
-
-                    User_Role user_Role = new User_Role()
+                    Role role2 = new Role()
                     {
-                        UserId = i,
-                        RoleId = 1
+                        Name = "Standart",
+                        Description = "Standart"
                     };
-                    _db.User_Roles.Add(user_Role);
 
-                    Customer customer = new Customer()
+                    context.Roles.Add(role1);
+                    context.Roles.Add(role2);
+
+                    Project project1 = new Project()
                     {
-                        Name = "Name" + i,
-                        Surname = "Surname" + i,
-                        Email = "email" + i + "@email.com",
-                        Telephone = "971000000" + i,
-                        UserName = "UserName" + i,
-                        RecordBase = Utils.RecordBase.Crm
+                        Name = "Project1",
+                        Description = "Description1"
                     };
 
-                    _db.Customers.Add(customer);
-
-                    Address address1 = new Address()
+                    Project project2 = new Project()
                     {
-                        Name = "Home",
-                        City = "Dubai",
-                        Country = "UAE",
-                        CustomerId = i,
-                        Detail = "Address Detail " + i
+                        Name = "Project2",
+                        Description = "Description2"
                     };
 
-                    Address address2 = new Address()
+                    context.Projects.Add(project1);
+                    context.Projects.Add(project2);
+
+                    var list = GetData().Result;
+                    list.AddRange(GetData().Result);
+                    list.AddRange(GetData().Result);
+                    list.AddRange(GetData().Result);
+                    list.AddRange(GetData().Result);
+                    list.AddRange(GetData().Result);
+
+                    for (int i = 1; i < list.Count; i++)
                     {
-                        Name = "Office",
-                        City = "Dubai",
-                        Country = "UAE",
-                        CustomerId = i,
-                        Detail = "Office Detail " + i
-                    };
-                    _db.Address.Add(address1);
-                    _db.Address.Add(address2);                  
+                        //User user = new User()
+                        //{
+                        //    Name = "Name" + i,
+                        //    SurName = "SurName" + i,
+                        //    Email = "email" + i + "@email.com",
+                        //    Password = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(i.ToString())),
+                        //    Phone = "971000000" + i,
+                        //    Status = 1,
+                        //    UserName = "UserName" + i,
+                        //};
+                        list[i].Id = i;
+                        list[i].UserName = "UserName" + i;
+                        list[i].SurName = list[i].Name.Split(" ")[1];
+                        list[i].Name = list[i].Name.Split(" ")[0];
+                        list[i].Password = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(i.ToString()));
+                        list[i].Status = 1;
+                        context.Users.Add(list[i]);
 
-                    Customer_Project customer_Project1 = new Customer_Project() { 
-                        ProjectId = 1, 
-                        CustomerId = i, 
-                    };
+                        User_Role user_Role = new User_Role()
+                        {
+                            UserId = i,
+                            RoleId = 1
+                        };
+                        context.User_Roles.Add(user_Role);
 
-                    Customer_Project customer_Project2 = new Customer_Project()
-                    {
-                        ProjectId = 2,
-                        CustomerId = i,
-                    };
+                        Customer customer = new Customer()
+                        {
+                            Name = list[i].Name,
+                            Surname = list[i].SurName,
+                            Email = "email" + i + "@email.com",
+                            Telephone = list[i].Phone,
+                            UserName = "UserName" + i,
+                            RecordBase = Utils.RecordBase.Crm
+                        };
 
-                    _db.Customer_Projects.Add(customer_Project1);
-                    _db.Customer_Projects.Add(customer_Project2);
-                    _db.SaveChanges();
+                        context.Customers.Add(customer);
+
+                        Address address1 = new Address()
+                        {
+                            Name = "Home",
+                            City = "Dubai",
+                            Country = "UAE",
+                            CustomerId = i,
+                            Detail = "Address Detail " + i
+                        };
+
+                        Address address2 = new Address()
+                        {
+                            Name = "Office",
+                            City = "Dubai",
+                            Country = "UAE",
+                            CustomerId = i,
+                            Detail = "Office Detail " + i
+                        };
+                        context.Address.Add(address1);
+                        context.Address.Add(address2);
+
+                        Customer_Project customer_Project1 = new Customer_Project()
+                        {
+                            ProjectId = 1,
+                            CustomerId = i,
+                        };
+
+                        Customer_Project customer_Project2 = new Customer_Project()
+                        {
+                            ProjectId = 2,
+                            CustomerId = i,
+                        };
+
+                        context.Customer_Projects.Add(customer_Project1);
+                        context.Customer_Projects.Add(customer_Project2);
+                        context.SaveChanges();
+                    }
                 }
             }
             catch (Exception ex)
@@ -307,4 +373,6 @@ namespace WebApi.Aplus.Controllers
             return HttpContext.Session.GetString("UserName");
         }
     }
+
+
 }

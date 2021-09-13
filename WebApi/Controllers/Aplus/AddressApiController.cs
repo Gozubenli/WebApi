@@ -20,13 +20,13 @@ namespace WebApi.Aplus.Controllers
     public class AddressApiController : ControllerBase
     {
         private readonly ILogger<AddressApiController> _logger;
-        private CrmDbContext _db;
+        private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
-        public AddressApiController(ILogger<AddressApiController> logger, CrmDbContext db)
+        public AddressApiController(ILogger<AddressApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
             _logger = logger;
-            _db = db;
-            _dbLogger = new DbLogger(_db);
+            _contextFactory = contextFactory;
+            _dbLogger = new DbLogger(_contextFactory);
         }
 
         [HttpPost("GetAddressList")]
@@ -35,7 +35,10 @@ namespace WebApi.Aplus.Controllers
             List<Address> list = new List<Address>();
             try
             {
-                list = await (from m in _db.Address select m).ToListAsync();
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    list = await (from m in context.Address select m).ToListAsync();
+                }
                 _logger.LogInformation("GetAddressList Count:" + list.Count);
             }
             catch (Exception ex)
@@ -55,12 +58,15 @@ namespace WebApi.Aplus.Controllers
                 Customer customer = null;
                 try
                 {
-                    customer = _db.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
-                    address.CreatedDate = DateTime.UtcNow;
-                    address.UpdateDate = DateTime.UtcNow;
-                    var dbResult = _db.Address.Add(address);
-                    await _db.SaveChangesAsync();
-                    result = dbResult != null;
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        customer = context.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
+                        address.CreatedDate = DateTime.UtcNow;
+                        address.UpdateDate = DateTime.UtcNow;
+                        var dbResult = context.Address.Add(address);
+                        await context.SaveChangesAsync();
+                        result = dbResult != null;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -85,22 +91,25 @@ namespace WebApi.Aplus.Controllers
                 Customer customer = null;
                 try
                 {
-                    customer = _db.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
-                    var existing = _db.Address.FirstOrDefault(o => o.Id == address.Id);
-                    if(existing != null)
+                    using (var context = _contextFactory.CreateDbContext())
                     {
-                        existing.Name = address.Name;
-                        existing.City = address.City;
-                        existing.Country = address.Country;
-                        existing.CustomerId = address.CustomerId;
-                        existing.Detail = address.Detail;
-                        existing.UpdateDate = DateTime.UtcNow;
-                        int dbResult = await _db.SaveChangesAsync();
-                        result = dbResult > 0;
-                    }
-                    else
-                    {
-                        _logger.LogError("UpdateAddress Not Found");
+                        customer = context.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
+                        var existing = context.Address.FirstOrDefault(o => o.Id == address.Id);
+                        if (existing != null)
+                        {
+                            existing.Name = address.Name;
+                            existing.City = address.City;
+                            existing.Country = address.Country;
+                            existing.CustomerId = address.CustomerId;
+                            existing.Detail = address.Detail;
+                            existing.UpdateDate = DateTime.UtcNow;
+                            int dbResult = await context.SaveChangesAsync();
+                            result = dbResult > 0;
+                        }
+                        else
+                        {
+                            _logger.LogError("UpdateAddress Not Found");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -127,17 +136,20 @@ namespace WebApi.Aplus.Controllers
                 Customer customer = null;
                 try
                 {
-                    customer = _db.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
-                    var existing = _db.Address.FirstOrDefault(o => o.Id == address.Id);
-                    if (existing != null)
+                    using (var context = _contextFactory.CreateDbContext())
                     {
-                        _db.Address.Remove(existing);
-                        int dbResult = await _db.SaveChangesAsync();
-                        result = dbResult > 0;
-                    }
-                    else
-                    {
-                        _logger.LogError("DeleteAddress Not Found");
+                        customer = context.Customers.Where(o => o.Id == address.CustomerId).FirstOrDefault();
+                        var existing = context.Address.FirstOrDefault(o => o.Id == address.Id);
+                        if (existing != null)
+                        {
+                            context.Address.Remove(existing);
+                            int dbResult = await context.SaveChangesAsync();
+                            result = dbResult > 0;
+                        }
+                        else
+                        {
+                            _logger.LogError("DeleteAddress Not Found");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -164,9 +176,12 @@ namespace WebApi.Aplus.Controllers
                 if (param["CustomerId"] != null)
                 {
                     int customerId = Convert.ToInt32(param["CustomerId"]);
-                    list = await (from m in _db.Address
-                                  where m.CustomerId == customerId
-                                  select m).ToListAsync();
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        list = await (from m in context.Address
+                                      where m.CustomerId == customerId
+                                      select m).ToListAsync();
+                    }
                     _logger.LogInformation("GetAddressList Count:" + list.Count);
                 }
             }

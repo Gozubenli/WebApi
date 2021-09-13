@@ -20,13 +20,13 @@ namespace WebApi.Aplus.Controllers
     public class ProjectApiController : ControllerBase
     {
         private readonly ILogger<ProjectApiController> _logger;
-        private CrmDbContext _db;
         private DbLogger _dbLogger;
-        public ProjectApiController(ILogger<ProjectApiController> logger, CrmDbContext db)
+        private readonly IDbContextFactory<CrmDbContext> _contextFactory;
+        public ProjectApiController(ILogger<ProjectApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
             _logger = logger;
-            _db = db;
-            _dbLogger = new DbLogger(_db);
+            _contextFactory = contextFactory;
+            _dbLogger = new DbLogger(_contextFactory);
         }
 
         [HttpPost("GetProjectList")]
@@ -36,7 +36,10 @@ namespace WebApi.Aplus.Controllers
             List<Project> list = new List<Project>();
             try
             {
-                list = await (from m in _db.Projects select m).ToListAsync();
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    list = await (from m in context.Projects select m).ToListAsync();
+                }
                 _logger.LogInformation("GetProjectList Count:" + list.Count);
             }
             catch (Exception ex)
@@ -54,9 +57,12 @@ namespace WebApi.Aplus.Controllers
             {
                 try
                 {
-                    var dbResult = _db.Projects.Add(project);
-                    await _db.SaveChangesAsync();
-                    result = dbResult != null;
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        var dbResult = context.Projects.Add(project);
+                        await context.SaveChangesAsync();
+                        result = dbResult != null;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -78,10 +84,15 @@ namespace WebApi.Aplus.Controllers
             {
                 if(param["CustomerId"] != null)
                 {
+
                     int customerId = Convert.ToInt32(param["CustomerId"]);
-                    list = await (from m in _db.Projects
-                                  join cp in _db.Customer_Projects on m.Id equals cp.ProjectId
-                                  where cp.CustomerId == customerId select m).ToListAsync();                    
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        list = await (from m in context.Projects
+                                      join cp in context.Customer_Projects on m.Id equals cp.ProjectId
+                                      where cp.CustomerId == customerId
+                                      select m).ToListAsync();
+                    }
                 }
                 _logger.LogInformation("GetProjectListByCustomerId\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + list.Count);
             }
@@ -101,16 +112,19 @@ namespace WebApi.Aplus.Controllers
             {
                 try
                 {
-                    var existing = _db.Projects.FirstOrDefault(o => o.Id == project.Id);
-                    if (existing != null)
+                    using (var context = _contextFactory.CreateDbContext())
                     {
-                        _db.Projects.Remove(existing);
-                        int dbResult = await _db.SaveChangesAsync();
-                        result = dbResult > 0;
-                    }
-                    else
-                    {
-                        _logger.LogError("DeleteProject Not Found");
+                        var existing = context.Projects.FirstOrDefault(o => o.Id == project.Id);
+                        if (existing != null)
+                        {
+                            context.Projects.Remove(existing);
+                            int dbResult = await context.SaveChangesAsync();
+                            result = dbResult > 0;
+                        }
+                        else
+                        {
+                            _logger.LogError("DeleteProject Not Found");
+                        }
                     }
                 }
                 catch (Exception ex)

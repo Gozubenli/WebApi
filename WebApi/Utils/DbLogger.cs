@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,16 +11,19 @@ namespace WebApi.Utils
 {
     public class DbLogger
     {
-        private CrmDbContext _db;
-        public DbLogger(CrmDbContext db)
+        private readonly IDbContextFactory<CrmDbContext> _contextFactory;
+        public DbLogger(IDbContextFactory<CrmDbContext> contextFactory)
         {
-            _db = db;
+            _contextFactory = contextFactory;
         }
 
         public async Task logInfo(string message, string userName)
         {
-            await _db.Logs.AddAsync(new Log() { Message=message, UserName=userName, Level="Info"});
-            await _db.SaveChangesAsync();
+            using (var context = _contextFactory.CreateDbContext())
+            {
+                await context.Logs.AddAsync(new Log() { Message = message, UserName = userName, Level = "Info" });
+                await context.SaveChangesAsync();
+            }
         }
     }
 }
