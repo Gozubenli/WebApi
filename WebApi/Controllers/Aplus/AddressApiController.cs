@@ -166,11 +166,10 @@ namespace WebApi.Aplus.Controllers
             return result;
         }
 
-        [HttpPost("GetAddressListByCustomerId")]
-        public async Task<List<Address>> GetAddressListByCustomerId([FromBody] JObject param)
+        [HttpPost("GetCustomerAddressList")]
+        public async Task<List<Address>> GetCustomerAddressList([FromBody] JObject param)
         {
             List<Address> list = new List<Address>();
-            _logger.LogInformation("GetAddressListByCustomerId");
             try
             {
                 if (param["CustomerId"] != null)
@@ -182,7 +181,6 @@ namespace WebApi.Aplus.Controllers
                                       where m.CustomerId == customerId
                                       select m).ToListAsync();
                     }
-                    _logger.LogInformation("GetAddressList Count:" + list.Count);
                 }
             }
             catch (Exception ex)

@@ -75,8 +75,8 @@ namespace WebApi.Aplus.Controllers
             return result;
         }
 
-        [HttpPost("GetProjectListByCustomerId")]
-        public async Task<List<Project>> GetProjectListByCustomerId([FromBody] JObject param)
+        [HttpPost("GetCustomerProjectList")]
+        public async Task<List<Project>> GetCustomerProjectList([FromBody] JObject param)
         {
             List<Project> list = new List<Project>();
             
@@ -94,7 +94,7 @@ namespace WebApi.Aplus.Controllers
                                       select m).ToListAsync();
                     }
                 }
-                _logger.LogInformation("GetProjectListByCustomerId\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + list.Count);
+                _logger.LogInformation("GetCustomerProjectList\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + list.Count);
             }
             catch (Exception ex)
             {

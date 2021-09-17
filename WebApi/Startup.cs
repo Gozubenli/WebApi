@@ -8,9 +8,6 @@ using WebApi.Data;
 using WebApi.Utils;
 using Microsoft.EntityFrameworkCore;
 using System;
-using WebApi.DbModels;
-using Microsoft.AspNetCore.Identity;
-using System.Threading.Tasks;
 
 namespace WebApi
 {
@@ -35,12 +32,14 @@ namespace WebApi
                 options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:sszzz";
                 options.UseCamelCasing(true);
                 options.UseMemberCasing();
+                options.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.None;
             });
             //services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<CrmDbContext>().AddDefaultTokenProviders();
             //services.AddIdentity<ApplicationUser, ApplicationRole>().AddDefaultTokenProviders();
             services.AddMemoryCache();
             services.AddCors();
             services.AddSession();
+            services.AddResponseCompression();           
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
@@ -58,6 +57,7 @@ namespace WebApi
                 app.UseHsts();
             }
 
+            app.UseResponseCompression();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();

@@ -11,17 +11,20 @@ namespace WebApi.DbModels
     /// Web Crm Kullanıcılarının Rolleri
     /// </summary>
     public class User : BaseModel
-    {        
+    {
+        [JsonProperty("u")]
         public string UserName { get; set; }
+        [JsonProperty("pa")]
         public string Password { get; set; }
-        //[JsonProperty("name")]
+        [JsonProperty("n")]
         public string Name { get; set; }
-       // [JsonProperty("surname")]
+        [JsonProperty("s")]
         public string SurName{ get; set; }
-        //[JsonProperty("phone")]
+        [JsonProperty("ph")]
         public string Phone { get; set; }
-       // [JsonProperty("email")]
+        [JsonProperty("e")]
         public string Email { get; set; }
+        [JsonProperty("st")]
         public int Status { get; set; }
     }
 }

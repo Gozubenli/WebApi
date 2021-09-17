@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace WebApi.DbModels
 {
     public class BaseModel
     {
-        public int Id { get; set; }
-
+        [JsonProperty("id")]
+        public int Id { get; set; }       
         private DateTime createdDate = DateTime.UtcNow;
+        [JsonProperty("cd")]
         public DateTime CreatedDate
         {
             get
@@ -34,6 +33,7 @@ namespace WebApi.DbModels
         }
 
         private DateTime updateDate = DateTime.UtcNow;
+        [JsonProperty("ud")]
         public DateTime UpdateDate
         {
             get

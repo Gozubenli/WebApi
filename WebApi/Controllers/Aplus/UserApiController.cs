@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using WebApi.Utils;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Data.OleDb;
 
 namespace WebApi.Aplus.Controllers
 {
@@ -22,12 +23,12 @@ namespace WebApi.Aplus.Controllers
     [ApiController]
     public class UserApiController : ControllerBase
     {
-        private readonly ILogger<AddressApiController> _logger;        
+        private readonly ILogger<AddressApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
         public UserApiController(ILogger<AddressApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
-            _logger = logger;           
+            _logger = logger;
             _contextFactory = contextFactory;
             _dbLogger = new DbLogger(_contextFactory);
         }
@@ -67,7 +68,7 @@ namespace WebApi.Aplus.Controllers
                         var dbResult = context.Users.Add(user);
                         await context.SaveChangesAsync();
                         result = dbResult != null;
-                    }                    
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -246,9 +247,12 @@ namespace WebApi.Aplus.Controllers
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Customers");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Address");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Customer_Projects");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employees");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Groups");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employee_Groups");
 
 
-
+                    #region Roles
                     Role role1 = new Role()
                     {
                         Name = "Admin",
@@ -259,70 +263,123 @@ namespace WebApi.Aplus.Controllers
                         Name = "Standart",
                         Description = "Standart"
                     };
-
                     context.Roles.Add(role1);
                     context.Roles.Add(role2);
+                    #endregion
 
+                    #region Projects
                     Project project1 = new Project()
                     {
                         Name = "Project1",
                         Description = "Description1"
                     };
-
                     Project project2 = new Project()
                     {
                         Name = "Project2",
                         Description = "Description2"
                     };
-
                     context.Projects.Add(project1);
                     context.Projects.Add(project2);
+                    #endregion
+
+                    #region Groups
+                    Group group1 = new Group()
+                    {
+                        Id = 1,
+                        Name = "Outsource Team"
+                    };
+                    Group group2 = new Group()
+                    {
+                        Id = 2,
+                        Name = "Insource Team"
+                    };
+                    context.Groups.Add(group1);
+                    context.Groups.Add(group2);
+                    #endregion
 
                     var list = GetData().Result;
-                    list.AddRange(GetData().Result);
-                    list.AddRange(GetData().Result);
-                    list.AddRange(GetData().Result);
-                    list.AddRange(GetData().Result);
-                    list.AddRange(GetData().Result);
 
-                    for (int i = 1; i < list.Count; i++)
+                    List<User> userList = new List<User>();
+                    List<User_Role> user_RoleList = new List<User_Role>();
+                    #region Users
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        //User user = new User()
-                        //{
-                        //    Name = "Name" + i,
-                        //    SurName = "SurName" + i,
-                        //    Email = "email" + i + "@email.com",
-                        //    Password = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(i.ToString())),
-                        //    Phone = "971000000" + i,
-                        //    Status = 1,
-                        //    UserName = "UserName" + i,
-                        //};
-                        list[i].Id = i;
-                        list[i].UserName = "UserName" + i;
-                        list[i].SurName = list[i].Name.Split(" ")[1];
-                        list[i].Name = list[i].Name.Split(" ")[0];
-                        list[i].Password = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(i.ToString()));
-                        list[i].Status = 1;
-                        context.Users.Add(list[i]);
+                        User user = new User()
+                        {
+                            Id = i,
+                            UserName = "UserName" + i,
+                            Name = list[i].Name.Split(" ")[0],
+                            SurName = list[i].Name.Split(" ")[1],
+                            Password = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(i.ToString())),
+                            Status = 1
+                        };
+                        userList.Add(user);
 
                         User_Role user_Role = new User_Role()
                         {
                             UserId = i,
                             RoleId = 1
                         };
-                        context.User_Roles.Add(user_Role);
+                        user_RoleList.Add(user_Role);
+                    }
+                    context.Users.AddRange(userList);
+                    context.User_Roles.AddRange(user_RoleList);
+                    #endregion
 
+                    context.SaveChanges();
+
+                    List<Employee> employeeList = new List<Employee>();
+                    List<Employee_Group> employee_GroupList = new List<Employee_Group>();
+
+                    #region Employees
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        Employee employee = new Employee()
+                        {
+                            Id = i,
+                            Name = list[i].Name.Split(" ")[0],
+                            Surname = list[i].Name.Split(" ")[1],
+                            UserName = list[i].UserName,
+                            Email = list[i].Email,
+                            Telephone = list[i].Phone
+                        };
+                        employeeList.Add(employee);
+                        Employee_Group employee_Group = new Employee_Group()
+                        {
+                            EmployeeId = i,
+                            GroupId = i < 6 ? 1 : 2
+                        };
+                        employee_GroupList.Add(employee_Group);
+                    }
+                    context.Employees.AddRange(employeeList);
+                    context.Employee_Groups.AddRange(employee_GroupList);
+                    #endregion
+
+                    context.SaveChanges();
+
+
+                    #region Customers
+                    for (int i = 0; i < 100; i++)
+                    {
+                        list.AddRange(GetData().Result);
+                    }
+
+                    List<Customer> customerList = new List<Customer>();
+                    List<Address> addressList = new List<Address>();
+                    List<Customer_Project> customer_ProjectList = new List<Customer_Project>();
+
+                    for (int i = 1; i < list.Count; i++)
+                    {
                         Customer customer = new Customer()
                         {
-                            Name = list[i].Name,
-                            Surname = list[i].SurName,
+                            Name = list[i].Name.Split(" ")[0],
+                            Surname = list[i].Name.Split(" ")[1],
                             Email = "email" + i + "@email.com",
                             Telephone = list[i].Phone,
                             UserName = "UserName" + i,
                             RecordBase = Utils.RecordBase.Crm
                         };
-
-                        context.Customers.Add(customer);
+                        customerList.Add(customer);                        
 
                         Address address1 = new Address()
                         {
@@ -341,8 +398,8 @@ namespace WebApi.Aplus.Controllers
                             CustomerId = i,
                             Detail = "Office Detail " + i
                         };
-                        context.Address.Add(address1);
-                        context.Address.Add(address2);
+                        addressList.Add(address1);
+                        addressList.Add(address2);                       
 
                         Customer_Project customer_Project1 = new Customer_Project()
                         {
@@ -356,10 +413,15 @@ namespace WebApi.Aplus.Controllers
                             CustomerId = i,
                         };
 
-                        context.Customer_Projects.Add(customer_Project1);
-                        context.Customer_Projects.Add(customer_Project2);
-                        context.SaveChanges();
+                        customer_ProjectList.Add(customer_Project1);
+                        customer_ProjectList.Add(customer_Project2);                       
                     }
+                    context.Customers.AddRange(customerList);
+                    context.Address.AddRange(addressList);
+                    context.Customer_Projects.AddRange(customer_ProjectList);
+
+                    context.SaveChanges();
+                    #endregion
                 }
             }
             catch (Exception ex)
@@ -371,6 +433,27 @@ namespace WebApi.Aplus.Controllers
         private string getUserName()
         {
             return HttpContext.Session.GetString("UserName");
+        }
+
+        [HttpPost("ReadExcel")]
+        public async Task<bool> ReadExcel()
+        {
+            string con = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Users\User\Downloads\Cubic.xlsx;" +
+                          @"Extended Properties='Excel 8.0;HDR=Yes;'";
+            using (OleDbConnection connection = new OleDbConnection(con))
+            {
+                connection.Open();
+                OleDbCommand command = new OleDbCommand("select * from [Sheet1$]", connection);
+                using (OleDbDataReader dr = command.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        var row1Col0 = dr[0];
+                        Console.WriteLine(row1Col0);
+                    }
+                }
+            }
+            return true;
         }
     }
 
