@@ -16,6 +16,7 @@ using WebApi.Utils;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Data.OleDb;
+using System.Diagnostics;
 
 namespace WebApi.Aplus.Controllers
 {
@@ -26,6 +27,11 @@ namespace WebApi.Aplus.Controllers
         private readonly ILogger<AddressApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
+
+        private static readonly Random random = new Random();
+        private static readonly object syncLock = new object();
+
+
         public UserApiController(ILogger<AddressApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
             _logger = logger;
@@ -76,7 +82,7 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "User " + user.Name + (result ? " Added" : "Could Not Added");
                 _logger.LogInformation("AddUser\tParam: " + JsonConvert.SerializeObject(user) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             _logger.LogInformation("AddUser Result:" + result);
             return result;
@@ -118,7 +124,7 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "User " + user.Name + (result ? " Updated" : "Could Not Updated");
                 _logger.LogInformation("UpdateUser\tParam: " + JsonConvert.SerializeObject(user) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             return result;
         }
@@ -152,7 +158,7 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "User " + user.Name + (result ? " Deleted" : "Could Not Deleted");
                 _logger.LogInformation("DeleteUser\tParam: " + JsonConvert.SerializeObject(user) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             return result;
         }
@@ -191,7 +197,7 @@ namespace WebApi.Aplus.Controllers
 
                         string message = "User " + userName + " Logged In";
                         _logger.LogInformation("Login\tParam: " + JsonConvert.SerializeObject(user) + "\tLogged In");
-                        await _dbLogger.logInfo(message, getUserName());
+                        await _dbLogger.logInfo(message, GetUserName());
                     }
                     else
                     {
@@ -250,7 +256,9 @@ namespace WebApi.Aplus.Controllers
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employees");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Groups");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employee_Groups");
-
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Works");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employee_Works");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Titles");
 
                     #region Roles
                     Role role1 = new Role()
@@ -291,7 +299,7 @@ namespace WebApi.Aplus.Controllers
                     Group group2 = new Group()
                     {
                         Id = 2,
-                        Name = "Insource Team"
+                        Name = "Inhouse Team"
                     };
                     context.Groups.Add(group1);
                     context.Groups.Add(group2);
@@ -301,6 +309,7 @@ namespace WebApi.Aplus.Controllers
 
                     List<User> userList = new List<User>();
                     List<User_Role> user_RoleList = new List<User_Role>();
+
                     #region Users
                     for (int i = 0; i < list.Count; i++)
                     {
@@ -324,42 +333,59 @@ namespace WebApi.Aplus.Controllers
                     }
                     context.Users.AddRange(userList);
                     context.User_Roles.AddRange(user_RoleList);
-                    #endregion
-
                     context.SaveChanges();
+                    #endregion                    
 
                     List<Employee> employeeList = new List<Employee>();
                     List<Employee_Group> employee_GroupList = new List<Employee_Group>();
 
-                    #region Employees
-                    for (int i = 0; i < list.Count; i++)
+                    int id = 1;
+
+                    #region Titles
+                    string[] titles = {"Select", "Electirician", "Cleaner", "Sales Manager", "Customer Services", "AC Mechanic", "Carpenter" };
+                    List<Title> titleList = new List<Title>();
+                    foreach (var item in titles)
                     {
-                        Employee employee = new Employee()
+                        titleList.Add(new Title() { Name = item});
+                    }
+                    context.Titles.AddRange(titleList);
+                    context.SaveChanges();
+
+                    #endregion
+
+                    #region Employees
+                    for (int j = 1; j < 4; j++)
+                    {
+                        for (int i = 0; i < list.Count; i++)
                         {
-                            Id = i,
-                            Name = list[i].Name.Split(" ")[0],
-                            Surname = list[i].Name.Split(" ")[1],
-                            UserName = list[i].UserName,
-                            Email = list[i].Email,
-                            Telephone = list[i].Phone
-                        };
-                        employeeList.Add(employee);
-                        Employee_Group employee_Group = new Employee_Group()
-                        {
-                            EmployeeId = i,
-                            GroupId = i < 6 ? 1 : 2
-                        };
-                        employee_GroupList.Add(employee_Group);
+                            id++;
+                            Employee employee = new Employee()
+                            {
+                                Id = id,
+                                Name = list[i].Name.Split(" ")[0],
+                                Surname = list[i].Name.Split(" ")[1],
+                                //UserName = list[i].UserName,
+                                Email = list[i].Email,
+                                Telephone = list[i].Phone,
+                                ImageUrl = GetRandomImage(),
+                                TitleId = GetRandomTitleId()
+                            };
+                            employeeList.Add(employee);
+                            Employee_Group employee_Group = new Employee_Group()
+                            {
+                                EmployeeId = id,
+                                GroupId = id < (list.Count * 2) ? 1 : 2
+                            };
+                            employee_GroupList.Add(employee_Group);
+                        }
                     }
                     context.Employees.AddRange(employeeList);
                     context.Employee_Groups.AddRange(employee_GroupList);
-                    #endregion
-
                     context.SaveChanges();
-
+                    #endregion                    
 
                     #region Customers
-                    for (int i = 0; i < 100; i++)
+                    for (int i = 1; i < 101; i++)
                     {
                         list.AddRange(GetData().Result);
                     }
@@ -376,10 +402,10 @@ namespace WebApi.Aplus.Controllers
                             Surname = list[i].Name.Split(" ")[1],
                             Email = "email" + i + "@email.com",
                             Telephone = list[i].Phone,
-                            UserName = "UserName" + i,
+                            //UserName = "UserName" + i,
                             RecordBase = Utils.RecordBase.Crm
                         };
-                        customerList.Add(customer);                        
+                        customerList.Add(customer);
 
                         Address address1 = new Address()
                         {
@@ -399,7 +425,7 @@ namespace WebApi.Aplus.Controllers
                             Detail = "Office Detail " + i
                         };
                         addressList.Add(address1);
-                        addressList.Add(address2);                       
+                        addressList.Add(address2);
 
                         Customer_Project customer_Project1 = new Customer_Project()
                         {
@@ -414,13 +440,66 @@ namespace WebApi.Aplus.Controllers
                         };
 
                         customer_ProjectList.Add(customer_Project1);
-                        customer_ProjectList.Add(customer_Project2);                       
+                        customer_ProjectList.Add(customer_Project2);
                     }
                     context.Customers.AddRange(customerList);
                     context.Address.AddRange(addressList);
                     context.Customer_Projects.AddRange(customer_ProjectList);
 
                     context.SaveChanges();
+                    #endregion
+
+
+                    #region Categories
+                    List<Category> categorieList = new List<Category>();
+                    for (int i = 1; i <= 10; i++)
+                    {
+                        Category category = new Category()
+                        {
+                            Name = "Category" + i,
+                            ParentId = 0
+                        };
+                        categorieList.Add(category);
+
+                        for (int j = 1; j < 5; j++)
+                        {
+                            Category sub = new Category()
+                            {
+                                Name = "Sub Category" + j,
+                                ParentId = i
+                            };
+                            categorieList.Add(sub);
+                        }
+                    }
+                    context.Categories.AddRange(categorieList);
+                    context.SaveChanges();
+
+                    #endregion
+
+                    #region WorkList
+
+                    List<Work> workList = new List<Work>();
+                    List<Employee_Work> employee_WorkList = new List<Employee_Work>();
+                    int workId = 1;
+
+                    for (int i = 0; i < employeeList.Count; i++)
+                    {
+                        for (int j = 0; j < 5; j++)
+                        {
+                            Work work = GetRandomWork(workId++, userList);
+                            workList.Add(work);
+                            Employee_Work employee_Work = new Employee_Work()
+                            {
+                                EmployeeId = employeeList[i].Id,
+                                WorkId = work.Id,
+                            };
+                            employee_WorkList.Add(employee_Work);
+                        }
+                    }
+                    context.Works.AddRange(workList);
+                    context.Employee_Works.AddRange(employee_WorkList);
+                    context.SaveChanges();
+
                     #endregion
                 }
             }
@@ -430,9 +509,91 @@ namespace WebApi.Aplus.Controllers
             }
             return true;
         }
-        private string getUserName()
+
+        private Work GetRandomWork(int id, List<User> list)
+        {
+            User usr = list[RandomNumber(1, 10)];
+            return new Work()
+            {
+                Id = id,
+                CategoryId = RandomNumber(1, 5),
+                CustomerId = RandomNumber(1, 11),
+                ProjectId = RandomNumber(1, 2),
+                Title = usr.Name+" "+usr.SurName+"'s Work Order "+usr.Phone,
+                Detail = "Detail about work order "+usr.Phone+" ...",
+                EmergencyStatus = id % 7 == 0 ? EmergencyStatus.Emergency : EmergencyStatus.Normal,
+                WorkStatus = GetRandomWorkStatus(),
+                WorkTime = GetRandomWorkTime(),
+                WorkType = id % 5 == 0 ? WorkType.Recurring : WorkType.Regular
+            };
+        }
+
+        private string GetRandomText()
+        {
+            return "asdf asdf asdf asdf sadf sadf asdf asdf sadf as";
+        }
+
+        private WorkStatus GetRandomWorkStatus()
+        {
+            int i = RandomNumber(1, 5);
+            switch (i)
+            {
+                case 1:
+                    return WorkStatus.New;
+                case 2:
+                    return WorkStatus.Completed;
+                case 3:
+                    return WorkStatus.InProgress;
+                case 4:
+                    return WorkStatus.Planned;
+                default:
+                    return WorkStatus.Completed;
+            }
+        }
+
+        private WorkTime GetRandomWorkTime()
+        {
+            int i = RandomNumber(1, 5);
+            switch (i)
+            {
+                case 1:
+                    return WorkTime.T_09_10;
+                case 2:
+                    return WorkTime.T_12_13;
+                case 3:
+                    return WorkTime.T_13_14;
+                case 4:
+                    return WorkTime.T_17_18;
+                default:
+                    return WorkTime.T_21_22;
+            }
+        }
+
+        private int GetRandomTitleId()
+        {            
+            var i = RandomNumber(0,10);
+            return i;
+        }
+
+        private string GetRandomImage()
+        {
+            var i = RandomNumber(1,4) + 1;
+            return "personel_" + i + (i < 3 ? ".jpg" : ".png");
+        }
+
+        private string GetUserName()
         {
             return HttpContext.Session.GetString("UserName");
+        }
+
+        public static int RandomNumber(int min, int max)
+        {
+            lock (syncLock)
+            {
+                var ran =  random.Next(min, max);
+                Debug.WriteLine(ran);
+                return ran;
+            }
         }
 
         [HttpPost("ReadExcel")]
@@ -457,5 +618,7 @@ namespace WebApi.Aplus.Controllers
         }
     }
 
+   
+    
 
 }

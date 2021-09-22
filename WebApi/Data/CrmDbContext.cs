@@ -20,12 +20,14 @@ namespace WebApi.Data
         public DbSet<Warehouse> Warehouse { get; set; }
         public DbSet<WebSettings> WebSettings { get; set; }
         public DbSet<Work> Works { get; set; }
+        public DbSet<Employee_Work> Employee_Works { get; set; }
         public DbSet<Customer_Project> Customer_Projects { get; set; }
         public DbSet<Employee_Group> Employee_Groups { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<User_Role> User_Roles { get; set; }
         public DbSet<Log> Logs { get; set; }
+        public DbSet<Title> Titles { get; set; }
 
         public CrmDbContext(DbContextOptions<CrmDbContext> options) : base(options)
         {

@@ -3,14 +3,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApi.Utils;
 
 namespace WebApi.DbModels
 {
-    public class Product : BaseModel
+    /// <summary>
+    /// Web Crm Kullanıcılarının Rolleri
+    /// </summary>
+    public class Title : BaseModel
     {
         [JsonProperty("n")]
         public string Name { get; set; }
-        [JsonProperty("wi")]
-        public int WarehouseId { get; set; }
     }
 }

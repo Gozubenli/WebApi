@@ -138,7 +138,7 @@ namespace WebApi.Aplus.Controllers
                         {
                             existing.Name = customer.Name;
                             existing.Surname = customer.Surname;
-                            existing.UserName = customer.UserName;
+                            //existing.UserName = customer.UserName;
                             existing.Email = customer.Email;
                             existing.Telephone = customer.Telephone;
                             existing.RecordBase = customer.RecordBase;
@@ -199,7 +199,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Project " + project.Name + (result ? " Added" : "Could Not Added") + "  To Customer " + customer.Name + " " + customer.Surname;
                     await _dbLogger.logInfo(message, getUserName());
-                    _logger.LogInformation("UpdateCustomer\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
+                    _logger.LogInformation("AddCustomerProject\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
             return result;

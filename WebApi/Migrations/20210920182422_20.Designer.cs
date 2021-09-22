@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApi.Data;
 
 namespace WebApi.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210920182422_20")]
+    partial class _20
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -128,6 +130,9 @@ namespace WebApi.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Password")
+                        .HasColumnType("longtext");
+
                     b.Property<int>("RecordBase")
                         .HasColumnType("int");
 
@@ -139,6 +144,9 @@ namespace WebApi.Migrations
 
                     b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
@@ -186,17 +194,23 @@ namespace WebApi.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Password")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Surname")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Telephone")
                         .HasColumnType("longtext");
 
-                    b.Property<int>("TitleId")
-                        .HasColumnType("int");
+                    b.Property<string>("Title")
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
@@ -362,26 +376,6 @@ namespace WebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
-                });
-
-            modelBuilder.Entity("WebApi.DbModels.Title", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("UpdateDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Titles");
                 });
 
             modelBuilder.Entity("WebApi.DbModels.User", b =>

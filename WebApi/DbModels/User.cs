@@ -8,23 +8,23 @@ using WebApi.Utils;
 namespace WebApi.DbModels
 {
     /// <summary>
-    /// Web Crm Kullanıcılarının Rolleri
+    /// Web Crm Users
     /// </summary>
     public class User : BaseModel
     {
-        [JsonProperty("u")]
+        //[JsonProperty("u")]
         public string UserName { get; set; }
-        [JsonProperty("pa")]
+        //[JsonProperty("pa")]
         public string Password { get; set; }
-        [JsonProperty("n")]
+        //[JsonProperty("n")]
         public string Name { get; set; }
-        [JsonProperty("s")]
-        public string SurName{ get; set; }
-        [JsonProperty("ph")]
+        //[JsonProperty("s")]
+        public string SurName { get; set; }
+        //[JsonProperty("ph")]
         public string Phone { get; set; }
-        [JsonProperty("e")]
+        //[JsonProperty("e")]
         public string Email { get; set; }
-        [JsonProperty("st")]
+        //[JsonProperty("st")]
         public int Status { get; set; }
     }
 }

@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApi.Data;
 
 namespace WebApi.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210918132219_18")]
+    partial class _18
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -140,6 +142,9 @@ namespace WebApi.Migrations
                     b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("UserName")
+                        .HasColumnType("longtext");
+
                     b.HasKey("Id");
 
                     b.ToTable("Customers");
@@ -192,11 +197,14 @@ namespace WebApi.Migrations
                     b.Property<string>("Telephone")
                         .HasColumnType("longtext");
 
-                    b.Property<int>("TitleId")
-                        .HasColumnType("int");
+                    b.Property<string>("Title")
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
@@ -364,26 +372,6 @@ namespace WebApi.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("WebApi.DbModels.Title", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("UpdateDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Titles");
-                });
-
             modelBuilder.Entity("WebApi.DbModels.User", b =>
                 {
                     b.Property<int>("Id")
@@ -515,17 +503,11 @@ namespace WebApi.Migrations
                     b.Property<int>("CustomerId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Detail")
-                        .HasColumnType("longtext");
-
                     b.Property<int>("EmergencyStatus")
                         .HasColumnType("int");
 
                     b.Property<int>("ProjectId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime(6)");
