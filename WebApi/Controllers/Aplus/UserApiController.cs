@@ -259,6 +259,8 @@ namespace WebApi.Aplus.Controllers
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Works");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employee_Works");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Titles");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.User_Roles");
+                    context.SaveChanges();
 
                     #region Roles
                     Role role1 = new Role()
@@ -291,20 +293,24 @@ namespace WebApi.Aplus.Controllers
                     #endregion
 
                     #region Groups
+                    Group group0 = new Group()
+                    {
+                        Name = "Undefined"
+                    };
                     Group group1 = new Group()
                     {
-                        Id = 1,
                         Name = "Outsource Team"
                     };
                     Group group2 = new Group()
                     {
-                        Id = 2,
                         Name = "Inhouse Team"
                     };
+                    context.Groups.Add(group0);
                     context.Groups.Add(group1);
                     context.Groups.Add(group2);
-                    #endregion
 
+                    #endregion
+                    context.SaveChanges();
                     var list = GetData().Result;
 
                     List<User> userList = new List<User>();
@@ -315,7 +321,6 @@ namespace WebApi.Aplus.Controllers
                     {
                         User user = new User()
                         {
-                            Id = i,
                             UserName = "UserName" + i,
                             Name = list[i].Name.Split(" ")[0],
                             SurName = list[i].Name.Split(" ")[1],
@@ -332,6 +337,7 @@ namespace WebApi.Aplus.Controllers
                         user_RoleList.Add(user_Role);
                     }
                     context.Users.AddRange(userList);
+                    context.SaveChanges();
                     context.User_Roles.AddRange(user_RoleList);
                     context.SaveChanges();
                     #endregion                    
@@ -342,7 +348,7 @@ namespace WebApi.Aplus.Controllers
                     int id = 1;
 
                     #region Titles
-                    string[] titles = {"Select", "Electirician", "Cleaner", "Sales Manager", "Customer Services", "AC Mechanic", "Carpenter" };
+                    string[] titles = {"Undefined","Electirician", "Cleaner", "Sales Manager", "Customer Services", "AC Mechanic", "Carpenter" };
                     List<Title> titleList = new List<Title>();
                     foreach (var item in titles)
                     {
@@ -368,13 +374,13 @@ namespace WebApi.Aplus.Controllers
                                 Email = list[i].Email,
                                 Telephone = list[i].Phone,
                                 ImageUrl = GetRandomImage(),
-                                TitleId = GetRandomTitleId()
+                                TitleId = GetRandomTitleId(titles)
                             };
                             employeeList.Add(employee);
                             Employee_Group employee_Group = new Employee_Group()
                             {
                                 EmployeeId = id,
-                                GroupId = id < (list.Count * 2) ? 1 : 2
+                                GroupId = id < (list.Count * 2) ? 2 : 3
                             };
                             employee_GroupList.Add(employee_Group);
                         }
@@ -569,9 +575,9 @@ namespace WebApi.Aplus.Controllers
             }
         }
 
-        private int GetRandomTitleId()
+        private int GetRandomTitleId(string[] arr)
         {            
-            var i = RandomNumber(0,10);
+            var i = RandomNumber(0, arr.Length);
             return i;
         }
 

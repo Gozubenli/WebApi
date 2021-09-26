@@ -106,6 +106,9 @@ namespace WebApi.Aplus.Controllers
                     {
                         var dbResult = context.Employees.Add(employee);
                         await context.SaveChangesAsync();
+                        var employeeGroup = new Employee_Group() { EmployeeId = employee.Id, GroupId = Defaults.undefinedGroupId };
+                        context.Employee_Groups.Add(employeeGroup);
+                        await context.SaveChangesAsync();
                         result = dbResult != null;
                     }
                 }
@@ -183,6 +186,16 @@ namespace WebApi.Aplus.Controllers
                         {
                             context.Employees.Remove(existing);
                             int dbResult = await context.SaveChangesAsync();
+
+                            var toDeleteList = context.Employee_Groups.Where(o => o.EmployeeId == employee.Id).ToList();
+                            if (toDeleteList != null)
+                            {
+                                foreach (var item in toDeleteList)
+                                {
+                                    context.Employee_Groups.Remove(item);
+                                }
+                            }
+
                             result = dbResult > 0;
                         }
                         else
@@ -217,6 +230,7 @@ namespace WebApi.Aplus.Controllers
                 using (var context = _contextFactory.CreateDbContext())
                 {
                     list = await (from m in context.Groups select m).ToListAsync();
+                    list = list.OrderBy(o => (o.Id == Defaults.undefinedGroupId)).ToList();
                 }
                 _logger.LogInformation("GetGroupList Count:" + list.Count);
             }
@@ -309,6 +323,11 @@ namespace WebApi.Aplus.Controllers
                         var existing = context.Groups.FirstOrDefault(o => o.Id == group.Id);
                         if (existing != null)
                         {
+                            var list = context.Employee_Groups.Where(o => o.GroupId == group.Id).ToList();
+                            foreach (var item in list)
+                            {
+                                item.GroupId = Defaults.undefinedGroupId;
+                            }
                             context.Groups.Remove(existing);
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
@@ -347,15 +366,23 @@ namespace WebApi.Aplus.Controllers
                 Group group = null;
                 try
                 {
-                    int custId = Convert.ToInt32(employeeId);
-                    int projId = Convert.ToInt32(groupId);
+                    int empId = Convert.ToInt32(employeeId);
+                    int groId = Convert.ToInt32(groupId);
                     using (var context = _contextFactory.CreateDbContext())
                     {
-                        employee = context.Employees.Where(o => o.Id == custId).FirstOrDefault();
-                        group = context.Groups.Where(o => o.Id == projId).FirstOrDefault();
+                        employee = context.Employees.Where(o => o.Id == empId).FirstOrDefault();
+                        group = context.Groups.Where(o => o.Id == groId).FirstOrDefault();
 
                         Employee_Group employee_Group = new Employee_Group() { EmployeeId = Convert.ToInt32(employeeId), GroupId = Convert.ToInt32(groupId) };
                         var dbResult = context.Add(employee_Group);
+
+                        //Undefined Grubu silebiliriz, baska grup eklendi
+                        var toDelete = (from m in context.Employee_Groups where m.GroupId == 1 && m.EmployeeId == empId select m).FirstOrDefault();
+                        if (toDelete != null)
+                        {
+                            context.Employee_Groups.Remove(toDelete);
+                        }
+
                         await context.SaveChangesAsync();
                         result = dbResult != null;
                     }
@@ -375,6 +402,11 @@ namespace WebApi.Aplus.Controllers
             return result;
         }
 
+        /// <summary>
+        /// Personelin grubunu 0 yani Undefined yapıyoruz
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
         [HttpPost("DeleteEmployeeGroup")]
         public async Task<bool> DeleteEmployeeGroup([FromBody] JObject param)
         {
@@ -388,17 +420,26 @@ namespace WebApi.Aplus.Controllers
                 Group group = null;
                 try
                 {
-                    int custId = Convert.ToInt32(employeeId);
-                    int projId = Convert.ToInt32(groupId);
+                    int empId = Convert.ToInt32(employeeId);
+                    int grpjId = Convert.ToInt32(groupId);
                     using (var context = _contextFactory.CreateDbContext())
                     {
-                        employee = context.Employees.Where(o => o.Id == custId).FirstOrDefault();
-                        group = context.Groups.Where(o => o.Id == projId).FirstOrDefault();
+                        employee = context.Employees.Where(o => o.Id == empId).FirstOrDefault();
+                        group = context.Groups.Where(o => o.Id == grpjId).FirstOrDefault();
 
-                        var existing = context.Employee_Groups.FirstOrDefault(o => o.EmployeeId == custId && o.GroupId == projId);
+                        var existing = context.Employee_Groups.FirstOrDefault(o => o.EmployeeId == empId && o.GroupId == grpjId);
                         if (existing != null)
                         {
-                            context.Employee_Groups.Remove(existing);
+                            int count = context.Employee_Groups.Where(o => o.EmployeeId == empId).ToList().Count;
+                            if (count > 1)
+                            {
+                                context.Employee_Groups.Remove(existing);
+                            }
+                            else
+                            {
+                                existing.GroupId = Defaults.undefinedGroupId;
+                            }
+
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
                         }
@@ -527,6 +568,11 @@ namespace WebApi.Aplus.Controllers
                         var existing = context.Titles.FirstOrDefault(o => o.Id == title.Id);
                         if (existing != null)
                         {
+                            var list = context.Employees.Where(o => o.TitleId == title.Id).ToList();
+                            foreach (var item in list)
+                            {
+                                item.TitleId = Defaults.undefinedTitleId;
+                            }
                             context.Titles.Remove(existing);
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
