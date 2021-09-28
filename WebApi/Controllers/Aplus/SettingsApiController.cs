@@ -62,8 +62,8 @@ namespace WebApi.Aplus.Controllers
                         if (existing != null)
                         {
                             existing.DefaultPadding = ws.DefaultPadding;
-                            existing.MenuColor1 = ws.MenuColor1;
-                            existing.MenuColor2 = ws.MenuColor2;
+                            existing.TitleColor = ws.TitleColor;
+                            existing.MenuColor = ws.MenuColor;
                             existing.PrimaryColor = ws.PrimaryColor;
                             existing.SecondaryColor = ws.SecondaryColor;
                             existing.TextColor = ws.TextColor;

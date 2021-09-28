@@ -12,11 +12,11 @@ namespace WebApi.DbModels
         public string PrimaryColor { get; set; }
         [JsonProperty("sc")]
         public string SecondaryColor { get; set; }
-        [JsonProperty("mc1")]
-        public string MenuColor1 { get; set; }
-        [JsonProperty("mc2")]
-        public string MenuColor2 { get; set; }
-        [JsonProperty("tc")]
+        [JsonProperty("tic")]
+        public string TitleColor { get; set; }
+        [JsonProperty("mc")]
+        public string MenuColor { get; set; }
+        [JsonProperty("tec")]
         public string TextColor { get; set; }
         [JsonProperty("dp")]
         public int DefaultPadding { get; set; }
