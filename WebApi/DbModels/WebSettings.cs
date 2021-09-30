@@ -20,6 +20,7 @@ namespace WebApi.DbModels
         public string TextColor { get; set; }
         [JsonProperty("dp")]
         public int DefaultPadding { get; set; }
-
+        [JsonProperty("ty")]
+        public int Type { get; set; }
     }
 }

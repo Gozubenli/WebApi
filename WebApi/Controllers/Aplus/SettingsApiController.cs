@@ -22,6 +22,8 @@ namespace WebApi.Aplus.Controllers
         private readonly ILogger<WebSettingsApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
+        private int defaultType = 0, normalType = 1;
+
         public WebSettingsApiController(ILogger<WebSettingsApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
             _logger = logger;
@@ -32,12 +34,19 @@ namespace WebApi.Aplus.Controllers
         [HttpPost("GetWebSettings")]
         public async Task<WebSettings> GetWebSettings([FromBody] JObject param)
         {
+            var settingsType = param["Type"];
+            int sType = normalType;
+            if (settingsType!=null)
+            {
+                sType = Convert.ToInt32(settingsType);
+            }
+
             WebSettings ws = new WebSettings();
             try
             {
                 using (var context = _contextFactory.CreateDbContext())
                 {
-                    ws = await (from m in context.WebSettings select m).FirstOrDefaultAsync();
+                    ws = await (from m in context.WebSettings where m.Type == sType select m).FirstOrDefaultAsync();
                 }
                 _logger.LogInformation("GetWebSettingsList Count:" + JsonConvert.SerializeObject(ws));
             }
