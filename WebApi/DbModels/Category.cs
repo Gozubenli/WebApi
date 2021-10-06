@@ -8,9 +8,13 @@ namespace WebApi.DbModels
 {
     public class Category : BaseModel
     {
-        [JsonProperty("n")]
-        public string Name { get; set; }
         [JsonProperty("pi")]
         public int ParentId { get; set; }
+        [JsonProperty("n")]
+        public string Name { get; set; }        
+        [JsonProperty("d")]
+        public string Description { get; set; }
+        [JsonProperty("i")]
+        public string Image { get; set; }
     }
 }
