@@ -260,6 +260,7 @@ namespace WebApi.Aplus.Controllers
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employee_Works");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Titles");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.User_Roles");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Categories");
                     context.SaveChanges();
 
                     #region Roles

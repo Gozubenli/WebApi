@@ -195,6 +195,30 @@ namespace WebApi.Aplus.Controllers
             }
             return list;
         }
+
+        [HttpPost("GetCategoryWorkList")]
+        public async Task<List<Work>> GetCategoryWorkList([FromBody] JObject param)
+        {
+            List<Work> list = new List<Work>();
+            try
+            {
+                if (param["CategoryId"] != null)
+                {
+                    int categoryId = Convert.ToInt32(param["CategoryId"]);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        list = await (from m in context.Works where m.CategoryId == categoryId select m).ToListAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
+            }
+            return list;
+        }
+
         private string getUserName()
         {
             return HttpContext.Session.GetString("UserName");
