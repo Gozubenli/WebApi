@@ -127,8 +127,14 @@ namespace WebApi.Aplus.Controllers
                     using (var context = _contextFactory.CreateDbContext())
                     {
                         var existing = context.Categories.FirstOrDefault(o => o.Id == category.Id);
+                        var existingWorkList = context.Works.Where(o => o.CategoryId == category.Id).ToList();
                         if (existing != null)
                         {
+                            foreach (var work in existingWorkList)
+                            {
+                                work.CategoryId = 0;
+                            }
+
                             context.Categories.Remove(existing);
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
