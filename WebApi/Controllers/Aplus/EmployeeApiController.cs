@@ -466,6 +466,104 @@ namespace WebApi.Aplus.Controllers
 
         #endregion
 
+        #region EmployeeWork
+        [HttpPost("AddEmployeeWork")]
+        public async Task<bool> AddEmployeeWork([FromBody] JObject param)
+        {
+            bool result = false;
+
+            var employeeId = param["EmployeeId"];
+            var workId = param["WorkId"];
+
+            if (employeeId != null && workId != null)
+            {
+                Employee employee = null;
+                Work work = null;
+                try
+                {
+                    int empId = Convert.ToInt32(employeeId);
+                    int worId = Convert.ToInt32(workId);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        employee = context.Employees.Where(o => o.Id == empId).FirstOrDefault();
+                        work = context.Works.Where(o => o.Id == worId).FirstOrDefault();
+
+                        Employee_Work employee_Work = new Employee_Work() { EmployeeId = Convert.ToInt32(employeeId), WorkId = Convert.ToInt32(workId) };
+                        var dbResult = context.Add(employee_Work);
+
+                        await context.SaveChangesAsync();
+                        result = dbResult != null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+
+                if (employee != null && work != null)
+                {
+                    string message = "Work " + work.Title + (result ? " Added" : "Could Not Added") + "  To Employee " + employee.Name + " " + employee.Surname;
+                    await _dbLogger.logInfo(message, getUserName());
+                    _logger.LogInformation("AddEmployeeWork\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Personelle ilişkili işi siliyoruz
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        [HttpPost("DeleteEmployeeWork")]
+        public async Task<bool> DeleteEmployeeWork([FromBody] JObject param)
+        {
+            bool result = false;
+            var employeeId = param["EmployeeId"];
+            var workId = param["WorkId"];
+
+            if (employeeId != null && workId != null)
+            {
+                Employee employee = null;
+                Work work = null;
+                try
+                {
+                    int empId = Convert.ToInt32(employeeId);
+                    int worId = Convert.ToInt32(workId);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        employee = context.Employees.Where(o => o.Id == empId).FirstOrDefault();
+                        work = context.Works.Where(o => o.Id == worId).FirstOrDefault();
+
+                        var existing = context.Employee_Works.FirstOrDefault(o => o.EmployeeId == empId && o.WorkId == worId);
+                        if (existing != null)
+                        {
+                            context.Employee_Works.Remove(existing);
+                            int dbResult = await context.SaveChangesAsync();
+                            result = dbResult > 0;
+                        }
+                        else
+                        {
+                            _logger.LogError("DeleteEmployeeWork Not Found");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+
+                if (employee != null && work != null)
+                {
+                    string message = "Work " + work.Title + (result ? " Deleted" : "Could Not Deleted") + "  From Employee " + employee.Name + " " + employee.Surname;
+                    await _dbLogger.logInfo(message, getUserName());
+                    _logger.LogInformation("DeleteEmployeeWork\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
+                }
+            }
+            return result;
+        }
+        #endregion
+
         #region Title
         [HttpPost("GetTitleList")]
         public async Task<List<Title>> GetTitleList([FromBody] JObject param)

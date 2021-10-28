@@ -65,13 +65,13 @@ namespace WebApi.Aplus.Controllers
                                       select new
                                       {
                                           customer = m,
-                                          //projectList = (from cp in context.Customer_Projects
-                                          //               join p in context.Projects on cp.ProjectId equals p.Id
-                                          //               where cp.CustomerId == m.Id
-                                          //               select p).ToList(),
-                                          //addressList = (from a in context.Address
-                                          //               where a.CustomerId == m.Id
-                                          //               select a).ToList(),
+                                          projectList = (from cp in context.Customer_Projects
+                                                         join p in context.Projects on cp.ProjectId equals p.Id
+                                                         where cp.CustomerId == m.Id
+                                                         select p).ToList(),
+                                          addressList = (from a in context.Address
+                                                         where a.CustomerId == m.Id
+                                                         select a).ToList(),
                                       }
                                   ).OrderByDescending(o => o.customer.Id).ToListAsync();
                     foreach (var item in list)
@@ -79,8 +79,8 @@ namespace WebApi.Aplus.Controllers
                         resultList.Add(new UiCustomerModel()
                         {
                             Customer = item.customer,
-                            //ProjectList = item.projectList,
-                            //AddressList = item.addressList
+                            ProjectList = item.projectList,
+                            AddressList = item.addressList
                         });
                     }
                 }

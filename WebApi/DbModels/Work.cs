@@ -27,5 +27,9 @@ namespace WebApi.DbModels
         public EmergencyStatus EmergencyStatus { get; set; }
         [JsonProperty("wt")]
         public WorkTime WorkTime { get; set; }
+        [JsonProperty("pd")]
+        public DateTime? PlannedDateTime { get; set; }
+        [JsonProperty("ph")]
+        public int PlannedHours { get; set; }
     }
 }

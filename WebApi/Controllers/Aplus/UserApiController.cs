@@ -289,8 +289,26 @@ namespace WebApi.Aplus.Controllers
                         Name = "Project2",
                         Description = "Description2"
                     };
+                    Project project3 = new Project()
+                    {
+                        Name = "Project23",
+                        Description = "Description3"
+                    };
+                    Project project4 = new Project()
+                    {
+                        Name = "Project4",
+                        Description = "Description4"
+                    };
+                    Project project5 = new Project()
+                    {
+                        Name = "Project5",
+                        Description = "Description5"
+                    };
                     context.Projects.Add(project1);
                     context.Projects.Add(project2);
+                    context.Projects.Add(project3);
+                    context.Projects.Add(project4);
+                    context.Projects.Add(project5);
                     #endregion
 
                     #region Groups
@@ -445,9 +463,42 @@ namespace WebApi.Aplus.Controllers
                             ProjectId = 2,
                             CustomerId = i,
                         };
+                        Customer_Project customer_Project3 = new Customer_Project()
+                        {
+                            ProjectId = 3,
+                            CustomerId = i,
+                        };
+                        Customer_Project customer_Project4 = new Customer_Project()
+                        {
+                            ProjectId = 4,
+                            CustomerId = i,
+                        };
+                        Customer_Project customer_Project5 = new Customer_Project()
+                        {
+                            ProjectId = 5,
+                            CustomerId = i,
+                        };
 
-                        customer_ProjectList.Add(customer_Project1);
+                        if (i%2==0)
+                        {
+                            customer_ProjectList.Add(customer_Project1);
+                        }
+                        else if (i % 3 == 0)
+                        {
+                            customer_ProjectList.Add(customer_Project3);
+                        }
+                        else if (i % 4 == 0)
+                        {
+                            customer_ProjectList.Add(customer_Project4);
+                        }
+                        else if (i % 5 == 0)
+                        {
+                            customer_ProjectList.Add(customer_Project5);
+                        }
+                        else
+                        {
                         customer_ProjectList.Add(customer_Project2);
+                        }
                     }
                     context.Customers.AddRange(customerList);
                     context.Address.AddRange(addressList);

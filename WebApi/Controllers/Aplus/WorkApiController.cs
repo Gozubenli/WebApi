@@ -107,6 +107,8 @@ namespace WebApi.Aplus.Controllers
                             existing.WorkTime = work.WorkTime;
                             existing.WorkType = work.WorkType;
                             existing.WorkTime = work.WorkTime;
+                            existing.PlannedDateTime = work.PlannedDateTime;
+                            existing.PlannedHours = work.PlannedHours;
                             existing.UpdateDate = DateTime.UtcNow;
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
