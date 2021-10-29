@@ -72,7 +72,7 @@ namespace WebApi.Aplus.Controllers
                                   select n).ToList();
 
                         var wl = (from m in employeeWorkList
-                                  join n in workList on m.EmployeeId equals n.Id
+                                  join n in workList on m.WorkId equals n.Id
                                   where m.EmployeeId == item.Id
                                   select n).ToList();
 
