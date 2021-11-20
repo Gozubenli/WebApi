@@ -31,5 +31,13 @@ namespace WebApi.DbModels
         public DateTime? PlannedDateTime { get; set; }
         [JsonProperty("ph")]
         public int PlannedHours { get; set; }
+        [JsonProperty("wpt")]
+        public WorkPeriod WorkPeriodType { get; set; }
+        [JsonProperty("wpn")]
+        public int WorkPeriodNumber { get; set; }
+        [JsonProperty("wpe")]
+        public DateTime WorkPeriodEndDate { get; set; }
+        [JsonProperty("wpr")]
+        public int WorkPeriodRootId { get; set; }
     }
 }

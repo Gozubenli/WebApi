@@ -67,6 +67,8 @@ namespace WebApi.Aplus.Controllers
                         await context.SaveChangesAsync();
                         result = dbResult != null;
                     }
+
+                    HandleRecurringWork(work);
                 }
                 catch (Exception ex)
                 {
@@ -109,6 +111,10 @@ namespace WebApi.Aplus.Controllers
                             existing.WorkTime = work.WorkTime;
                             existing.PlannedDateTime = work.PlannedDateTime;
                             existing.PlannedHours = work.PlannedHours;
+                            existing.WorkPeriodType = work.WorkPeriodType;
+                            existing.WorkPeriodNumber = work.WorkPeriodNumber;
+                            existing.WorkPeriodEndDate = work.WorkPeriodEndDate;
+                            existing.WorkPeriodRootId = work.WorkPeriodRootId;
                             existing.UpdateDate = DateTime.UtcNow;
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
@@ -118,6 +124,7 @@ namespace WebApi.Aplus.Controllers
                             _logger.LogError("UpdateWork Not Found");
                         }
                     }
+                    HandleRecurringWork(work);
                 }
                 catch (Exception ex)
                 {
@@ -150,6 +157,10 @@ namespace WebApi.Aplus.Controllers
                         if (existing != null)
                         {
                             context.Works.Remove(existing);
+
+                            var subList = context.Works.Where(o => o.WorkPeriodRootId == work.Id).ToList();
+                            context.Works.RemoveRange(subList);
+
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
                         }
@@ -219,6 +230,78 @@ namespace WebApi.Aplus.Controllers
                 _logger.LogError(ex.StackTrace);
             }
             return list;
+        }
+
+        public async void HandleRecurringWork(Work work)
+        {
+            try
+            {
+                if (work.WorkType == WorkType.Recurring && work.WorkPeriodRootId == 0)
+                {
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        var subRecurringWorkList = context.Works.Where(o => o.WorkPeriodRootId == work.Id).ToList();
+                        if (subRecurringWorkList.Count > 0)
+                        {
+                            context.RemoveRange(subRecurringWorkList);
+                        }
+
+                        DateTime nextWorkDate = work.CreatedDate;
+
+                        do
+                        {
+                            if (work.WorkPeriodType == WorkPeriod.Days)
+                            {
+                                nextWorkDate = nextWorkDate.AddDays(work.WorkPeriodNumber);
+                            }
+                            else if (work.WorkPeriodType == WorkPeriod.Weeks)
+                            {
+                                nextWorkDate = nextWorkDate.AddDays(work.WorkPeriodNumber * 7);
+                            }
+                            else if (work.WorkPeriodType == WorkPeriod.Months)
+                            {
+                                nextWorkDate = nextWorkDate.AddMonths(work.WorkPeriodNumber);
+                            }
+                            else if (work.WorkPeriodType == WorkPeriod.Years)
+                            {
+                                nextWorkDate = nextWorkDate.AddYears(work.WorkPeriodNumber);
+                            }
+                            else
+                            {
+                                nextWorkDate = work.WorkPeriodEndDate;
+                            }
+
+                            Work subWork = new Work()
+                            {
+                                CategoryId = work.CategoryId,
+                                CustomerId = work.CustomerId,
+                                Detail = work.Detail,
+                                EmergencyStatus = work.EmergencyStatus,
+                                PlannedDateTime = nextWorkDate,
+                                PlannedHours = work.PlannedHours,
+                                ProjectId = work.ProjectId,
+                                Title = work.Title,
+                                WorkStatus = WorkStatus.New,
+                                WorkTime = work.WorkTime,
+                                WorkType = WorkType.Regular,
+                                WorkPeriodRootId = work.Id
+                            };
+
+                            context.Works.Add(subWork);
+
+                            _logger.LogInformation("Add Recurring Sub Work \tParam: " + JsonConvert.SerializeObject(subWork));
+                        }
+                        while (nextWorkDate < work.WorkPeriodEndDate);
+
+                        await context.SaveChangesAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
+            }
         }
 
         private string getUserName()

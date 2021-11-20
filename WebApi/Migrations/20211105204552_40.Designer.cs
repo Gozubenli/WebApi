@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApi.Data;
 
 namespace WebApi.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211105204552_40")]
+    partial class _40
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -549,9 +551,6 @@ namespace WebApi.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("WorkPeriodNumber")
-                        .HasColumnType("int");
-
-                    b.Property<int>("WorkPeriodRootId")
                         .HasColumnType("int");
 
                     b.Property<int>("WorkPeriodType")

@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 using WebApi.Utils;
 using Microsoft.AspNetCore.Http;
 using WebApi.UiModels;
+using System.IO;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApi.Aplus.Controllers
 {
@@ -23,6 +25,8 @@ namespace WebApi.Aplus.Controllers
         private readonly ILogger<EmployeeApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
+        private string imageFolder = "images/personel/";
+
         public EmployeeApiController(ILogger<EmployeeApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
             _logger = logger;
@@ -54,6 +58,7 @@ namespace WebApi.Aplus.Controllers
         public async Task<List<UiEmployeeModel>> GetEmployeeModelList([FromBody] JObject param)
         {
             List<UiEmployeeModel> resultList = new List<UiEmployeeModel>();
+            //DateTime startDate = DateTime.Today.AddDays(-7);
             try
             {
                 using (var context = _contextFactory.CreateDbContext())
@@ -61,24 +66,24 @@ namespace WebApi.Aplus.Controllers
                     var employeeList = await (from m in context.Employees select m).ToListAsync();
                     var groupList = await (from m in context.Groups select m).ToListAsync();
                     var employeeGroupList = await (from m in context.Employee_Groups select m).ToListAsync();
-                    var workList = await (from m in context.Works select m).ToListAsync();
+                    var workList = await (from m in context.Works orderby m.Id select m).ToListAsync();
                     var employeeWorkList = await (from m in context.Employee_Works select m).ToListAsync();
 
-                    foreach (var item in employeeList)
+                    foreach (var employee in employeeList)
                     {
                         var gl = (from m in employeeGroupList
                                   join n in groupList on m.GroupId equals n.Id
-                                  where m.EmployeeId == item.Id
+                                  where m.EmployeeId == employee.Id
                                   select n).ToList();
 
                         var wl = (from m in employeeWorkList
                                   join n in workList on m.WorkId equals n.Id
-                                  where m.EmployeeId == item.Id
+                                  where m.EmployeeId == employee.Id
                                   select n).ToList();
 
                         resultList.Add(new UiEmployeeModel()
                         {
-                            Employee = item,
+                            Employee = employee,
                             GroupList = gl,
                             WorkList = wl
                         });
@@ -216,6 +221,69 @@ namespace WebApi.Aplus.Controllers
                 }
             }
             return result;
+        }
+
+        [HttpPost("UploadImage")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            try
+            {
+                _logger.LogInformation("FileName:" + file.FileName + " Length:" + file.Length, getUserName());
+                string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, file.FileName);
+                var stream = new FileStream(path, FileMode.Create);
+                await file.CopyToAsync(stream);
+
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    int employeeId = Convert.ToInt32(file.FileName.Split(".")[0]);
+                    var existing = context.Employees.FirstOrDefault(o => o.Id == employeeId);
+                    if (existing != null)
+                    {
+                        existing.ImageUrl = file.FileName;
+                        existing.UpdateDate = DateTime.UtcNow;
+                        int dbResult = await context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        _logger.LogError("UpdateEmployee Not Found");
+                    }
+                }
+
+                return Ok(new { length = file.Length, name = file.FileName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+
+        [HttpGet("GetImage/{employeeId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetImage(int employeeId)
+        {
+            _logger.LogInformation("EmployeeId:" + employeeId, getUserName());
+
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, "default.png");
+            FileStream image = System.IO.File.OpenRead(path);
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var existing = context.Employees.FirstOrDefault(o => o.Id == employeeId);
+                    if (existing != null)
+                    {
+                        path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, existing.ImageUrl);
+                        image = System.IO.File.OpenRead(path);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            
+            return File(image, "image/" + Path.GetExtension(path).Replace(".", ""));
         }
 
         #endregion
@@ -467,6 +535,47 @@ namespace WebApi.Aplus.Controllers
         #endregion
 
         #region EmployeeWork
+
+        //[HttpPost("UpdateEmployeeWork")]
+        //public async Task<bool> UpdateEmployeeWork([FromBody] List<Employee_Work> employee_WorkList)
+        //{
+        //    bool result = false;
+
+        //    if (employee_WorkList != null && employee_WorkList.Count > 0 != null)
+        //    {
+        //        Employee employee = null;
+        //        Work work = null;
+        //        try
+        //        {
+        //            int empId = Convert.ToInt32(employeeId);
+        //            int worId = Convert.ToInt32(workId);
+        //            using (var context = _contextFactory.CreateDbContext())
+        //            {
+        //                employee = context.Employees.Where(o => o.Id == empId).FirstOrDefault();
+        //                work = context.Works.Where(o => o.Id == worId).FirstOrDefault();
+
+        //                Employee_Work employee_Work = new Employee_Work() { EmployeeId = Convert.ToInt32(employeeId), WorkId = Convert.ToInt32(workId) };
+        //                var dbResult = context.Add(employee_Work);
+
+        //                await context.SaveChangesAsync();
+        //                result = dbResult != null;
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            _logger.LogError(ex.Message);
+        //        }
+
+        //        if (employee != null && work != null)
+        //        {
+        //            string message = "Work " + work.Title + (result ? " Added" : "Could Not Added") + "  To Employee " + employee.Name + " " + employee.Surname;
+        //            await _dbLogger.logInfo(message, getUserName());
+        //            _logger.LogInformation("AddEmployeeWork\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
+        //        }
+        //    }
+        //    return result;
+        //}
+
         [HttpPost("AddEmployeeWork")]
         public async Task<bool> AddEmployeeWork([FromBody] JObject param)
         {
@@ -535,10 +644,13 @@ namespace WebApi.Aplus.Controllers
                         employee = context.Employees.Where(o => o.Id == empId).FirstOrDefault();
                         work = context.Works.Where(o => o.Id == worId).FirstOrDefault();
 
-                        var existing = context.Employee_Works.FirstOrDefault(o => o.EmployeeId == empId && o.WorkId == worId);
-                        if (existing != null)
+                        var existingList = context.Employee_Works.Where(o => o.EmployeeId == empId && o.WorkId == worId).ToList();
+                        if (existingList != null && existingList.Count > 0)
                         {
-                            context.Employee_Works.Remove(existing);
+                            foreach (var existing in existingList)
+                            {
+                                context.Employee_Works.Remove(existing);
+                            }
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
                         }
