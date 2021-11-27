@@ -8,9 +8,9 @@ namespace WebApi.DbModels
     /// <summary>
     /// Web Crm Kullanıcılarının Rolleri
     /// </summary>
-    public class User_Role : BaseModel
+    public class Employee_Role : BaseModel
     {
-        public int UserId { get; set; }
+        public int EmployeeId { get; set; }
         public int RoleId { get; set; }
     }
 }

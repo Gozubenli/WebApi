@@ -39,6 +39,7 @@ namespace WebApi.Aplus.Controllers
             _dbLogger = new DbLogger(_contextFactory);
         }
 
+        /*
         [HttpPost("GetUserList")]
         public async Task<List<User>> GetUserList([FromBody] JObject param)
         {
@@ -214,11 +215,12 @@ namespace WebApi.Aplus.Controllers
 
             return result;
         }
+        */
 
         [HttpPost("GetData")]
-        public async Task<List<User>> GetData()
+        public async Task<List<TestData>> GetData()
         {
-            List<User> userList = new List<User>();
+            List<TestData> list = new List<TestData>();
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri("https://jsonplaceholder.typicode.com");
 
@@ -230,14 +232,14 @@ namespace WebApi.Aplus.Controllers
             HttpResponseMessage response = client.GetAsync("/users").Result;  // Blocking call! Program will wait here until a response is received or a timeout occurs.
             if (response.IsSuccessStatusCode)
             {
-                userList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<User>>(response.Content.ReadAsStringAsync().Result);
+                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<TestData>>(response.Content.ReadAsStringAsync().Result);                
             }
             else
             {
                 Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
             }
             client.Dispose();
-            return userList;
+            return list;
         }
 
         [HttpPost("TestData")]
@@ -249,7 +251,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Roles");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Projects");
-                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Users");
+                    //context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Users");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Customers");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Address");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Customer_Projects");
@@ -259,7 +261,7 @@ namespace WebApi.Aplus.Controllers
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Works");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employee_Works");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Titles");
-                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.User_Roles");
+                    context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Employee_Roles");
                     context.Database.ExecuteSqlRaw("TRUNCATE TABLE aplus.Categories");
                     context.SaveChanges();
 
@@ -332,6 +334,7 @@ namespace WebApi.Aplus.Controllers
                     context.SaveChanges();
                     var list = GetData().Result;
 
+                    /*
                     List<User> userList = new List<User>();
                     List<User_Role> user_RoleList = new List<User_Role>();
 
@@ -360,18 +363,20 @@ namespace WebApi.Aplus.Controllers
                     context.User_Roles.AddRange(user_RoleList);
                     context.SaveChanges();
                     #endregion                    
+                    */
 
                     List<Employee> employeeList = new List<Employee>();
                     List<Employee_Group> employee_GroupList = new List<Employee_Group>();
+                    List<Employee_Role> employee_RoleList = new List<Employee_Role>();
 
                     int id = 1;
 
                     #region Titles
-                    string[] titles = {"Undefined","Electirician", "Cleaner", "Sales Manager", "Customer Services", "AC Mechanic", "Carpenter" };
+                    string[] titles = { "Undefined", "Electirician", "Cleaner", "Sales Manager", "Customer Services", "AC Mechanic", "Carpenter" };
                     List<Title> titleList = new List<Title>();
                     foreach (var item in titles)
                     {
-                        titleList.Add(new Title() { Name = item});
+                        titleList.Add(new Title() { Name = item });
                     }
                     context.Titles.AddRange(titleList);
                     context.SaveChanges();
@@ -389,10 +394,10 @@ namespace WebApi.Aplus.Controllers
                                 Id = id,
                                 Name = list[i].Name.Split(" ")[0],
                                 Surname = list[i].Name.Split(" ")[1],
-                                //UserName = list[i].UserName,
+                                Password = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(id.ToString())),
                                 Email = list[i].Email,
                                 Telephone = list[i].Phone,
-                                ImageUrl = GetRandomImage(),
+                                ImageName = GetRandomImage(),
                                 TitleId = GetRandomTitleId(titles)
                             };
                             employeeList.Add(employee);
@@ -401,11 +406,19 @@ namespace WebApi.Aplus.Controllers
                                 EmployeeId = id,
                                 GroupId = id < (list.Count * 2) ? 2 : 3
                             };
+
+                            Employee_Role user_Role = new Employee_Role()
+                            {
+                                EmployeeId = i,
+                                RoleId = 1
+                            };
+                            employee_RoleList.Add(user_Role);
                             employee_GroupList.Add(employee_Group);
                         }
                     }
                     context.Employees.AddRange(employeeList);
                     context.Employee_Groups.AddRange(employee_GroupList);
+                    context.Employee_Roles.AddRange(employee_RoleList);
                     context.SaveChanges();
                     #endregion                    
 
@@ -427,7 +440,6 @@ namespace WebApi.Aplus.Controllers
                             Surname = list[i].Name.Split(" ")[1],
                             Email = "email" + i + "@email.com",
                             Telephone = list[i].Phone,
-                            //UserName = "UserName" + i,
                             RecordBase = Utils.RecordBase.Crm
                         };
                         customerList.Add(customer);
@@ -479,7 +491,7 @@ namespace WebApi.Aplus.Controllers
                             CustomerId = i,
                         };
 
-                        if (i%2==0)
+                        if (i % 2 == 0)
                         {
                             customer_ProjectList.Add(customer_Project1);
                         }
@@ -497,7 +509,7 @@ namespace WebApi.Aplus.Controllers
                         }
                         else
                         {
-                        customer_ProjectList.Add(customer_Project2);
+                            customer_ProjectList.Add(customer_Project2);
                         }
                     }
                     context.Customers.AddRange(customerList);
@@ -506,7 +518,6 @@ namespace WebApi.Aplus.Controllers
 
                     context.SaveChanges();
                     #endregion
-
 
                     #region Categories
                     List<Category> categorieList = new List<Category>();
@@ -544,7 +555,7 @@ namespace WebApi.Aplus.Controllers
                     {
                         for (int j = 0; j < 5; j++)
                         {
-                            Work work = GetRandomWork(workId++, userList);
+                            Work work = GetRandomWork(workId++, employeeList);
                             workList.Add(work);
                             Employee_Work employee_Work = new Employee_Work()
                             {
@@ -568,27 +579,22 @@ namespace WebApi.Aplus.Controllers
             return true;
         }
 
-        private Work GetRandomWork(int id, List<User> list)
+        private Work GetRandomWork(int id, List<Employee> list)
         {
-            User usr = list[RandomNumber(1, 10)];
+            Employee usr = list[RandomNumber(1, 10)];
             return new Work()
             {
                 Id = id,
                 CategoryId = RandomNumber(1, 5),
                 CustomerId = RandomNumber(1, 11),
                 ProjectId = RandomNumber(1, 2),
-                Title = usr.Name+" "+usr.SurName+"'s Work Order "+usr.Phone,
-                Detail = "Detail about work order "+usr.Phone+" ...",
+                Title = usr.Name + " " + usr.Surname + "'s Work Order " + usr.Telephone,
+                Detail = "Detail about work order " + usr.Telephone + " ...",
                 EmergencyStatus = id % 7 == 0 ? EmergencyStatus.Emergency : EmergencyStatus.Normal,
                 WorkStatus = GetRandomWorkStatus(),
                 WorkTime = GetRandomWorkTime(),
                 WorkType = id % 5 == 0 ? WorkType.Recurring : WorkType.Regular
             };
-        }
-
-        private string GetRandomText()
-        {
-            return "asdf asdf asdf asdf sadf sadf asdf asdf sadf as";
         }
 
         private WorkStatus GetRandomWorkStatus()
@@ -628,15 +634,15 @@ namespace WebApi.Aplus.Controllers
         }
 
         private int GetRandomTitleId(string[] arr)
-        {            
+        {
             var i = RandomNumber(0, arr.Length);
             return i;
         }
 
         private string GetRandomImage()
         {
-            var i = RandomNumber(1,4) + 1;
-            return "personel_" + i + (i < 3 ? ".jpg" : ".png");
+            var i = RandomNumber(1, 4) + 1;
+            return i + (i < 3 ? ".jpg" : ".png");
         }
 
         private string GetUserName()
@@ -648,7 +654,7 @@ namespace WebApi.Aplus.Controllers
         {
             lock (syncLock)
             {
-                var ran =  random.Next(min, max);
+                var ran = random.Next(min, max);
                 Debug.WriteLine(ran);
                 return ran;
             }
@@ -676,7 +682,27 @@ namespace WebApi.Aplus.Controllers
         }
     }
 
-   
-    
+    /// <summary>
+    /// Test Data
+    /// </summary>
+    public class TestData
+    {
+        [JsonProperty("id")]
+        public long Id { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("username")]
+        public string Username { get; set; }
+
+        [JsonProperty("email")]
+        public string Email { get; set; }
+
+        [JsonProperty("phone")]
+        public string Phone { get; set; }
+    }
+
+
 
 }

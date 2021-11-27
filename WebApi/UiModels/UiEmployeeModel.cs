@@ -15,5 +15,7 @@ namespace WebApi.UiModels
         public List<Group> GroupList { get; set; }
         [JsonProperty("wl")]
         public List<Work> WorkList { get; set; }
+        [JsonProperty("rl")]
+        public List<Role> RoleList { get; set; }
     }
 }

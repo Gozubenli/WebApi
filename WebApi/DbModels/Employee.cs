@@ -17,10 +17,8 @@ namespace WebApi.DbModels
         public string Name { get; set; }
         [JsonProperty("s")]
         public string Surname { get; set; }
-        //[JsonProperty("u")]
-        //public string UserName { get; set; }
-        //[JsonProperty("pa")]
-        //public string Password { get; set; }
+        [JsonProperty("pa")]
+        public string Password { get; set; }
         [JsonProperty("e")]
         public string Email { get; set; }
         [JsonProperty("p")]
@@ -28,6 +26,6 @@ namespace WebApi.DbModels
         [JsonProperty("t")]
         public int TitleId { get; set; }
         [JsonProperty("i")]
-        public string ImageUrl { get; set; }
+        public string ImageName { get; set; }
     }
 }

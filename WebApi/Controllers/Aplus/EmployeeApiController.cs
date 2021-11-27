@@ -25,7 +25,7 @@ namespace WebApi.Aplus.Controllers
         private readonly ILogger<EmployeeApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
-        private string imageFolder = "images/personel/";
+        private string imageFolder = "images/aplus/personel/";
 
         public EmployeeApiController(ILogger<EmployeeApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
@@ -68,9 +68,12 @@ namespace WebApi.Aplus.Controllers
                     var employeeGroupList = await (from m in context.Employee_Groups select m).ToListAsync();
                     var workList = await (from m in context.Works orderby m.Id select m).ToListAsync();
                     var employeeWorkList = await (from m in context.Employee_Works select m).ToListAsync();
+                    var roleList = await (from m in context.Roles orderby m.Id select m).ToListAsync();
+                    var employeeRoleList = await (from m in context.Employee_Roles select m).ToListAsync();
 
                     foreach (var employee in employeeList)
                     {
+                        employee.Password = "";
                         var gl = (from m in employeeGroupList
                                   join n in groupList on m.GroupId equals n.Id
                                   where m.EmployeeId == employee.Id
@@ -81,11 +84,18 @@ namespace WebApi.Aplus.Controllers
                                   where m.EmployeeId == employee.Id
                                   select n).ToList();
 
+                        var rl = (from m in employeeRoleList
+                                  join n in roleList on m.RoleId equals n.Id
+                                  where m.EmployeeId == employee.Id
+                                  select n).ToList();
+
+
                         resultList.Add(new UiEmployeeModel()
                         {
                             Employee = employee,
                             GroupList = gl,
-                            WorkList = wl
+                            WorkList = wl,
+                            RoleList = rl
                         });
                     }
                 }
@@ -96,6 +106,59 @@ namespace WebApi.Aplus.Controllers
             }
 
             return resultList;
+        }
+
+        private async Task<UiEmployeeModel> GetEmployeeModel(string email, string password)
+        {
+            UiEmployeeModel result = new UiEmployeeModel();
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var employee = await (from m in context.Employees where m.Email == email.ToString() && m.Password == password.ToString() select m).FirstOrDefaultAsync();                                       
+
+                    if(employee != null)
+                    {
+                        var groupList = await (from m in context.Groups select m).ToListAsync();
+                        var employeeGroupList = await (from m in context.Employee_Groups where m.EmployeeId == employee.Id select m).ToListAsync();
+                        var workList = await (from m in context.Works orderby m.Id select m).ToListAsync();
+                        var employeeWorkList = await (from m in context.Employee_Works where m.EmployeeId == employee.Id select m).ToListAsync();
+                        var roleList = await (from m in context.Roles orderby m.Id select m).ToListAsync();
+                        var employeeRoleList = await (from m in context.Employee_Roles where m.EmployeeId == employee.Id select m).ToListAsync();
+                        employee.Password = "";
+
+                        var gl = (from m in employeeGroupList
+                                  join n in groupList on m.GroupId equals n.Id
+                                  where m.EmployeeId == employee.Id
+                                  select n).ToList();
+
+                        var wl = (from m in employeeWorkList
+                                  join n in workList on m.WorkId equals n.Id
+                                  where m.EmployeeId == employee.Id
+                                  select n).ToList();
+
+                        var rl = (from m in employeeRoleList
+                                  join n in roleList on m.RoleId equals n.Id
+                                  where m.EmployeeId == employee.Id
+                                  select n).ToList();
+
+
+                        result = new UiEmployeeModel()
+                        {
+                            Employee = employee,
+                            GroupList = gl,
+                            WorkList = wl,
+                            RoleList = rl
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+
+            return result;
         }
 
         [HttpPost("AddEmployee")]
@@ -146,11 +209,11 @@ namespace WebApi.Aplus.Controllers
                         {
                             existing.Name = employee.Name;
                             existing.Surname = employee.Surname;
-                            //existing.UserName = employee.UserName;
+                            existing.Password = employee.Password;
                             existing.Email = employee.Email;
                             existing.Telephone = employee.Telephone;
                             existing.TitleId = employee.TitleId;
-                            existing.ImageUrl = employee.ImageUrl;
+                            existing.ImageName = employee.ImageName;
                             existing.UpdateDate = DateTime.UtcNow;
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
@@ -239,7 +302,7 @@ namespace WebApi.Aplus.Controllers
                     var existing = context.Employees.FirstOrDefault(o => o.Id == employeeId);
                     if (existing != null)
                     {
-                        existing.ImageUrl = file.FileName;
+                        existing.ImageName = file.FileName;
                         existing.UpdateDate = DateTime.UtcNow;
                         int dbResult = await context.SaveChangesAsync();
                     }
@@ -262,7 +325,7 @@ namespace WebApi.Aplus.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetImage(int employeeId)
         {
-            _logger.LogInformation("EmployeeId:" + employeeId, getUserName());
+            //_logger.LogInformation("EmployeeId:" + employeeId, getUserName());
 
             string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, "default.png");
             FileStream image = System.IO.File.OpenRead(path);
@@ -273,7 +336,7 @@ namespace WebApi.Aplus.Controllers
                     var existing = context.Employees.FirstOrDefault(o => o.Id == employeeId);
                     if (existing != null)
                     {
-                        path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, existing.ImageUrl);
+                        path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, existing.ImageName);
                         image = System.IO.File.OpenRead(path);
                     }
                 }
@@ -286,6 +349,43 @@ namespace WebApi.Aplus.Controllers
             return File(image, "image/" + Path.GetExtension(path).Replace(".", ""));
         }
 
+        [HttpPost("Login")]
+        public async Task<UiEmployeeModel> Login([FromBody] JObject param)
+        {
+            var email = param["Email"];
+            var password = param["Password"];
+
+            UiEmployeeModel user = null;
+            try
+            {
+                if (email != null && password != null)
+                {
+                    user = await GetEmployeeModel(email.ToString(), password.ToString());
+
+                    if (user != null)
+                    {
+                        user.Employee.Password = "";
+                        _logger.LogInformation("Login " + email.ToString());
+
+                        string message = "Employee " + email + " Logged In";
+                        _logger.LogInformation("Login\tParam: " + JsonConvert.SerializeObject(user) + "\tLogged In");
+                        await _dbLogger.logInfo(message, getUserName());
+                    }
+                    else
+                    {
+                        string message = "Employee " + email + " Could Not Logged In";
+                        _logger.LogInformation("Login\tParam: " + JsonConvert.SerializeObject(param) + "\tCould Not Logged In");
+                        await _dbLogger.logInfo(message, email.ToString());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.StackTrace);
+            }
+
+            return user;
+        }
         #endregion
 
         #region Groups
@@ -809,6 +909,129 @@ namespace WebApi.Aplus.Controllers
 
         #endregion
 
+        #region Role
+
+        [HttpPost("GetRoleList")]
+        public async Task<List<Role>> GetRoleList([FromBody] JObject param)
+        {
+            List<Role> list = new List<Role>();
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    list = await (from m in context.Roles select m).ToListAsync();
+                }
+                _logger.LogInformation("GetRoleList Count:" + list.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return list;
+        }
+
+        [HttpPost("AddEmployeeRole")]
+        public async Task<bool> AddEmployeeRole([FromBody] JObject param)
+        {
+            bool result = false;
+
+            var employeeId = param["EmployeeId"];
+            var roleId = param["RoleId"];
+
+            if (employeeId != null && roleId != null)
+            {
+                Employee employee = null;
+                Role role = null;
+                try
+                {
+                    int empId = Convert.ToInt32(employeeId);
+                    int groId = Convert.ToInt32(roleId);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        employee = context.Employees.Where(o => o.Id == empId).FirstOrDefault();
+                        role = context.Roles.Where(o => o.Id == groId).FirstOrDefault();
+
+                        Employee_Role employee_Role = new Employee_Role() { EmployeeId = Convert.ToInt32(employeeId), RoleId = Convert.ToInt32(roleId) };
+                        var dbResult = context.Add(employee_Role);
+
+                        await context.SaveChangesAsync();
+                        result = dbResult != null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+
+                if (employee != null && role != null)
+                {
+                    string message = "Role " + role.Name + (result ? " Added" : "Could Not Added") + "  To Employee " + employee.Name + " " + employee.Surname;
+                    await _dbLogger.logInfo(message, getUserName());
+                    _logger.LogInformation("AddEmployeeRole\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Personelin grubunu 0 yani Undefined yapıyoruz
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        [HttpPost("DeleteEmployeeRole")]
+        public async Task<bool> DeleteEmployeeRole([FromBody] JObject param)
+        {
+            bool result = false;
+            var employeeId = param["EmployeeId"];
+            var roleId = param["RoleId"];
+
+            if (employeeId != null && roleId != null)
+            {
+                Employee employee = null;
+                Role role = null;
+                try
+                {
+                    int empId = Convert.ToInt32(employeeId);
+                    int grpjId = Convert.ToInt32(roleId);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        employee = context.Employees.Where(o => o.Id == empId).FirstOrDefault();
+                        role = context.Roles.Where(o => o.Id == grpjId).FirstOrDefault();
+
+                        var existing = context.Employee_Roles.FirstOrDefault(o => o.EmployeeId == empId && o.RoleId == grpjId);
+                        if (existing != null)
+                        {
+                            int count = context.Employee_Roles.Where(o => o.EmployeeId == empId).ToList().Count;
+                            if (count > 0)
+                            {
+                                context.Employee_Roles.Remove(existing);
+                            }
+
+                            int dbResult = await context.SaveChangesAsync();
+                            result = dbResult > 0;
+                        }
+                        else
+                        {
+                            _logger.LogError("DeleteEmployeeRole Not Found");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+
+                if (employee != null && role != null)
+                {
+                    string message = "Role " + role.Name + (result ? " Deleted" : "Could Not Deleted") + "  From Employee " + employee.Name + " " + employee.Surname;
+                    await _dbLogger.logInfo(message, getUserName());
+                    _logger.LogInformation("DeleteEmployeeRole\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
+                }
+            }
+            return result;
+        }
+
+        #endregion
         private string getUserName()
         {
             return HttpContext.Session.GetString("UserName");
