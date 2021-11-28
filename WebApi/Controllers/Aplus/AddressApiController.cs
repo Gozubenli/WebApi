@@ -102,6 +102,8 @@ namespace WebApi.Aplus.Controllers
                             existing.Country = address.Country;
                             existing.CustomerId = address.CustomerId;
                             existing.Detail = address.Detail;
+                            existing.Longitude = address.Longitude;
+                            existing.Latidude = address.Latidude;
                             existing.UpdateDate = DateTime.UtcNow;
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;

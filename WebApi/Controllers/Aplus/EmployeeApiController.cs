@@ -25,7 +25,7 @@ namespace WebApi.Aplus.Controllers
         private readonly ILogger<EmployeeApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
-        private string imageFolder = "images/aplus/personel/";
+        private string imageFolder = "images/aplus/";
 
         public EmployeeApiController(ILogger<EmployeeApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
@@ -115,9 +115,9 @@ namespace WebApi.Aplus.Controllers
             {
                 using (var context = _contextFactory.CreateDbContext())
                 {
-                    var employee = await (from m in context.Employees where m.Email == email.ToString() && m.Password == password.ToString() select m).FirstOrDefaultAsync();                                       
+                    var employee = await (from m in context.Employees where m.Email == email.ToString() && m.Password == password.ToString() select m).FirstOrDefaultAsync();
 
-                    if(employee != null)
+                    if (employee != null)
                     {
                         var groupList = await (from m in context.Groups select m).ToListAsync();
                         var employeeGroupList = await (from m in context.Employee_Groups where m.EmployeeId == employee.Id select m).ToListAsync();
@@ -286,13 +286,13 @@ namespace WebApi.Aplus.Controllers
             return result;
         }
 
-        [HttpPost("UploadImage")]
-        public async Task<IActionResult> UploadImage(IFormFile file)
+        [HttpPost("UploadEmployeeImage")]
+        public async Task<IActionResult> UploadEmployeeImage(IFormFile file)
         {
             try
             {
                 _logger.LogInformation("FileName:" + file.FileName + " Length:" + file.Length, getUserName());
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, file.FileName);
+                string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder + "personel/", file.FileName);
                 var stream = new FileStream(path, FileMode.Create);
                 await file.CopyToAsync(stream);
 
@@ -321,13 +321,11 @@ namespace WebApi.Aplus.Controllers
             }
         }
 
-        [HttpGet("GetImage/{employeeId}")]
+        [HttpGet("GetEmployeeImage/{employeeId}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetImage(int employeeId)
+        public async Task<IActionResult> GetEmployeeImage(int employeeId)
         {
-            //_logger.LogInformation("EmployeeId:" + employeeId, getUserName());
-
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, "default.png");
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder + "personel/", "default.png");
             FileStream image = System.IO.File.OpenRead(path);
             try
             {
@@ -336,7 +334,7 @@ namespace WebApi.Aplus.Controllers
                     var existing = context.Employees.FirstOrDefault(o => o.Id == employeeId);
                     if (existing != null)
                     {
-                        path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder, existing.ImageName);
+                        path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder + "personel/", existing.ImageName);
                         image = System.IO.File.OpenRead(path);
                     }
                 }
@@ -345,7 +343,71 @@ namespace WebApi.Aplus.Controllers
             {
                 _logger.LogError(ex.Message);
             }
-            
+
+            return File(image, "image/" + Path.GetExtension(path).Replace(".", ""));
+        }
+
+        [HttpPost("UploadCategoryImage")]
+        public async Task<IActionResult> UploadCategoryImage(IFormFile file)
+        {
+            try
+            {
+                _logger.LogInformation("FileName:" + file.FileName + " Length:" + file.Length, getUserName());
+                string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder + "category/", file.FileName);
+                var stream = new FileStream(path, FileMode.Create);
+                await file.CopyToAsync(stream);
+
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    int categgoryId = Convert.ToInt32(file.FileName.Split(".")[0]);
+                    var existing = context.Categories.FirstOrDefault(o => o.Id == categgoryId);
+                    if (existing != null)
+                    {
+                        existing.Image = file.FileName;
+                        existing.UpdateDate = DateTime.UtcNow;
+                        int dbResult = await context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        _logger.LogError("UploadCategoryImage Not Found");
+                    }
+                }
+
+                return Ok(new { length = file.Length, name = file.FileName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+
+        [HttpGet("GetCategoryImage/{categoryId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCategoryImage(int categoryId)
+        {
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder + "category/", "default.png");
+            FileStream image = System.IO.File.OpenRead(path);
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var existing = context.Categories.FirstOrDefault(o => o.Id == categoryId);
+                    if (existing != null)
+                    {
+                        path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder + "category/", existing.Image);
+                        if (System.IO.File.Exists(path))
+                        {
+                            image = System.IO.File.OpenRead(path);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+
             return File(image, "image/" + Path.GetExtension(path).Replace(".", ""));
         }
 
