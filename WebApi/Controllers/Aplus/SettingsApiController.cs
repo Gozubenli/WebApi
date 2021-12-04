@@ -99,6 +99,34 @@ namespace WebApi.Aplus.Controllers
             _logger.LogInformation("UpdateWebSettings Result:" + result);
             return result;
         }
+
+        [HttpPost("GetLogList")]
+        public async Task<List<Log>> GetLogList([FromBody] JObject param)
+        {
+            List<Log> resultList = new List<Log>();
+            var days = param["Days"];
+
+            DateTime startDate = DateTime.Today.AddDays(-7);
+            if (days != null)
+            {
+                startDate = DateTime.Today.AddDays(-Convert.ToInt32(days));
+            }
+
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    resultList = await (from m in context.Logs where m.CreatedDate > startDate select m).ToListAsync();
+                }
+                _logger.LogInformation("GetLogList Count:" + resultList.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return resultList;
+        }
+
         private string getUserName()
         {
             return HttpContext.Session.GetString("UserName");
