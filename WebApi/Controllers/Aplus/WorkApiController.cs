@@ -74,12 +74,12 @@ namespace WebApi.Aplus.Controllers
                 {
                     _logger.LogError(ex.Message);
                 }
-                if(customer != null)
+                if (customer != null)
                 {
                     string message = "Work " + work.Title + (result ? " Added" : "Could Not Added") + " To Customer " + customer.Name + " " + customer.Surname;
                     _logger.LogInformation("AddWork\tParam: " + JsonConvert.SerializeObject(work) + "\tResult: " + result);
                     await _dbLogger.logInfo(message, getUserName());
-                }                
+                }
             }
             return result;
         }

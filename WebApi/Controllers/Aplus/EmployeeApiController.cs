@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using WebApi.UiModels;
 using System.IO;
 using Microsoft.AspNetCore.Authorization;
+using System.Globalization;
 
 namespace WebApi.Aplus.Controllers
 {
@@ -106,6 +107,55 @@ namespace WebApi.Aplus.Controllers
             }
 
             return resultList;
+        }
+
+        [HttpPost("GetEmployeePlanList")]
+        public async Task<List<UiEmployeePlan>> GetEmployeePlanList([FromBody] JObject param)
+        {
+            List<UiEmployeePlan> list = new List<UiEmployeePlan>();
+            try
+            {
+                if (param["PlannedDate"] != null)
+                {                   
+                    DateTime plannedDate = DateTime.ParseExact(param["PlannedDate"].ToString(), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                    plannedDate = plannedDate.Date;
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        var employeeList = await (from m in context.Employees select m).ToListAsync();
+
+                        var workList = await (from m in context.Works
+                                              join n in context.Employee_Works on m.Id equals n.WorkId
+                                              join e in context.Employees on n.EmployeeId equals e.Id
+                                              where m.PlannedDateTime != null && m.PlannedDateTime.Value.Date == plannedDate orderby e.Id orderby m.PlannedDateTime 
+                                              select new { work = m, employee = e }).ToListAsync();
+                                                
+                        int startHour = 7;
+                        foreach (var emp in employeeList)
+                        {
+                            UiEmployeePlan model = new UiEmployeePlan();
+                            model.Employee = emp;
+                            Plan[] ocList = new Plan[15];
+                            var wl = workList.Where(o => o.employee.Id == emp.Id).OrderBy(o=> o.work.PlannedDateTime).ToList();
+                            for (int hour= startHour; hour < startHour+15; hour++)
+                            {
+                                var ew = wl.FirstOrDefault(o => o.work.PlannedDateTime.Value.Hour == hour || (o.work.PlannedDateTime.Value.Hour < hour && o.work.PlannedDateTime.Value.Hour+ o.work.PlannedHours > hour));
+                                int index = hour - startHour;
+                                int? wId = ew != null ? ew.work.Id : null;
+                                int? custId = ew != null ? ew.work.CustomerId : null;
+                                ocList[index] = new Plan() { index = index, workTime = (WorkTime)index, status = (ew!=null), workId = wId, customerId = custId};
+                            }
+                            model.PlanList = ocList.ToList();
+                            list.Add(model);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
+            }
+            return list;
         }
 
         private async Task<UiEmployeeModel> GetEmployeeModel(string email, string password)
