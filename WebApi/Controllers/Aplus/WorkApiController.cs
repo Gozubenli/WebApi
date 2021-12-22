@@ -114,7 +114,10 @@ namespace WebApi.Aplus.Controllers
                             existing.WorkPeriodType = work.WorkPeriodType;
                             existing.WorkPeriodNumber = work.WorkPeriodNumber;
                             existing.WorkPeriodEndDate = work.WorkPeriodEndDate;
+                            existing.WorkPeriodRecurringDays = work.WorkPeriodRecurringDays;
+                            existing.WorkPeriodRecurringType = work.WorkPeriodRecurringType;
                             existing.WorkPeriodRootId = work.WorkPeriodRootId;
+
                             existing.UpdateDate = DateTime.UtcNow;
                             int dbResult = await context.SaveChangesAsync();
                             result = dbResult > 0;
@@ -250,46 +253,86 @@ namespace WebApi.Aplus.Controllers
 
                         do
                         {
-                            if (work.WorkPeriodType == WorkPeriod.Days)
+                            if (work.WorkPeriodRecurringType != null && work.WorkPeriodRecurringType == 0)
                             {
-                                nextWorkDate = nextWorkDate.AddDays(work.WorkPeriodNumber);
-                            }
-                            else if (work.WorkPeriodType == WorkPeriod.Weeks)
-                            {
-                                nextWorkDate = nextWorkDate.AddDays(work.WorkPeriodNumber * 7);
-                            }
-                            else if (work.WorkPeriodType == WorkPeriod.Months)
-                            {
-                                nextWorkDate = nextWorkDate.AddMonths(work.WorkPeriodNumber);
-                            }
-                            else if (work.WorkPeriodType == WorkPeriod.Years)
-                            {
-                                nextWorkDate = nextWorkDate.AddYears(work.WorkPeriodNumber);
+                                if (work.WorkPeriodType == WorkPeriod.Days)
+                                {
+                                    nextWorkDate = nextWorkDate.AddDays(work.WorkPeriodNumber??0);
+                                }
+                                else if (work.WorkPeriodType == WorkPeriod.Weeks)
+                                {
+                                    nextWorkDate = nextWorkDate.AddDays(work.WorkPeriodNumber ?? 0 * 7);
+                                }
+                                else if (work.WorkPeriodType == WorkPeriod.Months)
+                                {
+                                    nextWorkDate = nextWorkDate.AddMonths(work.WorkPeriodNumber ?? 0);
+                                }
+                                else if (work.WorkPeriodType == WorkPeriod.Years)
+                                {
+                                    nextWorkDate = nextWorkDate.AddYears(work.WorkPeriodNumber ?? 0);
+                                }
+                                else
+                                {
+                                    nextWorkDate = work.WorkPeriodEndDate ?? DateTime.Now.AddDays(30);
+                                }
+
+                                Work subWork = new Work()
+                                {
+                                    CategoryId = work.CategoryId,
+                                    CustomerId = work.CustomerId,
+                                    Detail = work.Detail,
+                                    EmergencyStatus = work.EmergencyStatus,
+                                    PlannedDateTime = nextWorkDate,
+                                    PlannedHours = work.PlannedHours,
+                                    ProjectId = work.ProjectId,
+                                    Title = work.Title,
+                                    WorkStatus = WorkStatus.New,
+                                    WorkTime = work.WorkTime,
+                                    WorkType = WorkType.Regular,
+                                    WorkPeriodRootId = work.Id
+                                };
+
+                                context.Works.Add(subWork);
+
+                                _logger.LogInformation("Add Recurring Sub Work \tParam: " + JsonConvert.SerializeObject(subWork));
                             }
                             else
                             {
-                                nextWorkDate = work.WorkPeriodEndDate;
+                                var days = work.WorkPeriodRecurringDays.Split(";").ToList();
+                                if(days!= null && days.Count>0)
+                                {
+                                    foreach (var day in days)
+                                    {
+                                        var dayOfWeek = (DayOfWeek)Enum.Parse(typeof(DayOfWeek), day, true);
+                                        var allDays= DateTime.Today.GetWeekdayInRange(work.WorkPeriodEndDate?? DateTime.Now.AddDays(30), dayOfWeek);
+                                        foreach (var item in allDays)
+                                        {
+                                            nextWorkDate = item;
+                                            Work subWork = new Work()
+                                            {
+                                                CategoryId = work.CategoryId,
+                                                CustomerId = work.CustomerId,
+                                                Detail = work.Detail,
+                                                EmergencyStatus = work.EmergencyStatus,
+                                                PlannedDateTime = nextWorkDate,
+                                                PlannedHours = work.PlannedHours,
+                                                ProjectId = work.ProjectId,
+                                                Title = work.Title,
+                                                WorkStatus = WorkStatus.New,
+                                                WorkTime = work.WorkTime,
+                                                WorkType = WorkType.Regular,
+                                                WorkPeriodRootId = work.Id
+                                            };
+
+                                            context.Works.Add(subWork);
+
+                                            _logger.LogInformation("Add Recurring Sub Work \tParam: " + JsonConvert.SerializeObject(subWork));
+                                        }
+                                    }
+                                }
                             }
 
-                            Work subWork = new Work()
-                            {
-                                CategoryId = work.CategoryId,
-                                CustomerId = work.CustomerId,
-                                Detail = work.Detail,
-                                EmergencyStatus = work.EmergencyStatus,
-                                PlannedDateTime = nextWorkDate,
-                                PlannedHours = work.PlannedHours,
-                                ProjectId = work.ProjectId,
-                                Title = work.Title,
-                                WorkStatus = WorkStatus.New,
-                                WorkTime = work.WorkTime,
-                                WorkType = WorkType.Regular,
-                                WorkPeriodRootId = work.Id
-                            };
-
-                            context.Works.Add(subWork);
-
-                            _logger.LogInformation("Add Recurring Sub Work \tParam: " + JsonConvert.SerializeObject(subWork));
+                            
                         }
                         while (nextWorkDate < work.WorkPeriodEndDate);
 

@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApi.Data;
 
 namespace WebApi.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211219094129_47")]
+    partial class _47
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -498,7 +500,7 @@ namespace WebApi.Migrations
                     b.Property<DateTime?>("PlannedDateTime")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("PlannedHours")
+                    b.Property<int>("PlannedHours")
                         .HasColumnType("int");
 
                     b.Property<int>("ProjectId")
@@ -510,22 +512,22 @@ namespace WebApi.Migrations
                     b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("WorkPeriodEndDate")
+                    b.Property<DateTime>("WorkPeriodEndDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("WorkPeriodNumber")
+                    b.Property<int>("WorkPeriodNumber")
                         .HasColumnType("int");
 
                     b.Property<string>("WorkPeriodRecurringDays")
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("WorkPeriodRecurringType")
+                    b.Property<int>("WorkPeriodRecurringType")
                         .HasColumnType("int");
 
-                    b.Property<int?>("WorkPeriodRootId")
+                    b.Property<int>("WorkPeriodRootId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("WorkPeriodType")
+                    b.Property<int>("WorkPeriodType")
                         .HasColumnType("int");
 
                     b.Property<int>("WorkStatus")

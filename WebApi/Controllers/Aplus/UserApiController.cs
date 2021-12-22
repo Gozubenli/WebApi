@@ -629,7 +629,7 @@ namespace WebApi.Aplus.Controllers
                 case 4:
                     return WorkTime.T_17_18;
                 default:
-                    return WorkTime.T_21_22;
+                    return WorkTime.T_09_10;
             }
         }
 
