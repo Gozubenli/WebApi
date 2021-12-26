@@ -16,12 +16,13 @@ using WebApi.UiModels;
 using System.IO;
 using Microsoft.AspNetCore.Authorization;
 using System.Globalization;
+using WebApi.Controllers.Aplus;
 
 namespace WebApi.Aplus.Controllers
 {
     [Route("aplus/[controller]")]
     [ApiController]
-    public class EmployeeApiController : ControllerBase
+    public class EmployeeApiController : BaseApiController
     {
         private readonly ILogger<EmployeeApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
@@ -238,7 +239,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Employee " + employee.Name + (result ? " Added" : "Could Not Added");
                     _logger.LogInformation("AddEmployee\tParam: " + JsonConvert.SerializeObject(employee) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             return result;
@@ -282,7 +283,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Employee " + employee.Name + (result ? " Updated" : "Could Not Updated");
                     _logger.LogInformation("UpdateEmployee\tParam: " + JsonConvert.SerializeObject(employee) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             _logger.LogInformation("UpdateEmployee Result:" + result);
@@ -330,7 +331,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Employee " + employee.Name + (result ? " Deleted" : "Could Not Deleted");
                     _logger.LogInformation("DeleteAddress\tParam: " + JsonConvert.SerializeObject(employee) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             return result;
@@ -341,7 +342,7 @@ namespace WebApi.Aplus.Controllers
         {
             try
             {
-                _logger.LogInformation("FileName:" + file.FileName + " Length:" + file.Length, getUserName());
+                _logger.LogInformation("FileName:" + file.FileName + " Length:" + file.Length, GetUserName());
                 string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder + "personel/", file.FileName);
                 var stream = new FileStream(path, FileMode.Create);
                 await file.CopyToAsync(stream);
@@ -402,7 +403,7 @@ namespace WebApi.Aplus.Controllers
         {
             try
             {
-                _logger.LogInformation("FileName:" + file.FileName + " Length:" + file.Length, getUserName());
+                _logger.LogInformation("FileName:" + file.FileName + " Length:" + file.Length, GetUserName());
                 string path = Path.Combine(Directory.GetCurrentDirectory(), "../" + imageFolder + "category/", file.FileName);
                 var stream = new FileStream(path, FileMode.Create);
                 await file.CopyToAsync(stream);
@@ -474,14 +475,14 @@ namespace WebApi.Aplus.Controllers
                 {
                     user = await GetEmployeeModel(email.ToString(), password.ToString());
 
-                    if (user != null)
+                    if (user != null && user.Employee != null)
                     {
                         user.Employee.Password = "";
                         _logger.LogInformation("Login " + email.ToString());
 
                         string message = "Employee " + email + " Logged In";
                         _logger.LogInformation("Login\tParam: " + JsonConvert.SerializeObject(user) + "\tLogged In");
-                        await _dbLogger.logInfo(message, getUserName());
+                        await _dbLogger.logInfo(message, GetUserName());
                     }
                     else
                     {
@@ -545,7 +546,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Group " + group.Name + (result ? " Added" : "Could Not Added");
                     _logger.LogInformation("AddGroup\tParam: " + JsonConvert.SerializeObject(group) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             return result;
@@ -583,7 +584,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Group " + group.Name + (result ? " Updated" : "Could Not Updated");
                     _logger.LogInformation("UpdateGroup\tParam: " + JsonConvert.SerializeObject(group) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             _logger.LogInformation("UpdateGroup Result:" + result);
@@ -626,7 +627,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Group " + group.Name + (result ? " Deleted" : "Could Not Deleted");
                     _logger.LogInformation("DeleteAddress\tParam: " + JsonConvert.SerializeObject(group) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             return result;
@@ -675,7 +676,7 @@ namespace WebApi.Aplus.Controllers
                 if (employee != null && group != null)
                 {
                     string message = "Group " + group.Name + (result ? " Added" : "Could Not Added") + "  To Employee " + employee.Name + " " + employee.Surname;
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                     _logger.LogInformation("AddEmployeeGroup\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
@@ -737,7 +738,7 @@ namespace WebApi.Aplus.Controllers
                 if (employee != null && group != null)
                 {
                     string message = "Group " + group.Name + (result ? " Deleted" : "Could Not Deleted") + "  From Employee " + employee.Name + " " + employee.Surname;
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                     _logger.LogInformation("DeleteEmployeeGroup\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
@@ -781,7 +782,7 @@ namespace WebApi.Aplus.Controllers
         //        if (employee != null && work != null)
         //        {
         //            string message = "Work " + work.Title + (result ? " Added" : "Could Not Added") + "  To Employee " + employee.Name + " " + employee.Surname;
-        //            await _dbLogger.logInfo(message, getUserName());
+        //            await _dbLogger.logInfo(message, GetUserName());
         //            _logger.LogInformation("AddEmployeeWork\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
         //        }
         //    }
@@ -824,7 +825,7 @@ namespace WebApi.Aplus.Controllers
                 if (employee != null && work != null)
                 {
                     string message = "Work " + work.Title + (result ? " Added" : "Could Not Added") + "  To Employee " + employee.Name + " " + employee.Surname;
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                     _logger.LogInformation("AddEmployeeWork\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
@@ -880,7 +881,7 @@ namespace WebApi.Aplus.Controllers
                 if (employee != null && work != null)
                 {
                     string message = "Work " + work.Title + (result ? " Deleted" : "Could Not Deleted") + "  From Employee " + employee.Name + " " + employee.Surname;
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                     _logger.LogInformation("DeleteEmployeeWork\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
@@ -932,7 +933,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Title " + title.Name + (result ? " Added" : "Could Not Added");
                     _logger.LogInformation("AddTitle\tParam: " + JsonConvert.SerializeObject(title) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             return result;
@@ -970,7 +971,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Title " + title.Name + (result ? " Updated" : "Could Not Updated");
                     _logger.LogInformation("UpdateTitle\tParam: " + JsonConvert.SerializeObject(title) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             _logger.LogInformation("UpdateTitle Result:" + result);
@@ -1013,7 +1014,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Title " + title.Name + (result ? " Deleted" : "Could Not Deleted");
                     _logger.LogInformation("DeleteAddress\tParam: " + JsonConvert.SerializeObject(title) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             return result;
@@ -1078,7 +1079,7 @@ namespace WebApi.Aplus.Controllers
                 if (employee != null && role != null)
                 {
                     string message = "Role " + role.Name + (result ? " Added" : "Could Not Added") + "  To Employee " + employee.Name + " " + employee.Surname;
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                     _logger.LogInformation("AddEmployeeRole\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
@@ -1136,17 +1137,52 @@ namespace WebApi.Aplus.Controllers
                 if (employee != null && role != null)
                 {
                     string message = "Role " + role.Name + (result ? " Deleted" : "Could Not Deleted") + "  From Employee " + employee.Name + " " + employee.Surname;
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                     _logger.LogInformation("DeleteEmployeeRole\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
             return result;
         }
 
-        #endregion
-        private string getUserName()
+        [HttpPost("SetEmployeePassword")]
+        public async Task<bool> SetEmployeePassword([FromBody] JObject param)
         {
-            return HttpContext.Session.GetString("UserName");
+            bool result = false;
+
+            var employeeId = param["EmployeeId"];
+            var password = param["Password"];
+
+            if (employeeId != null && password != null)
+            {
+                Employee employee = null;
+                try
+                {
+                    int empId = Convert.ToInt32(employeeId);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        employee = context.Employees.FirstOrDefault(o => o.Id == empId);
+                        employee.Password = password.ToString();
+
+                        int dbResult =  await context.SaveChangesAsync();
+                        result = dbResult >= 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+
+                if (employee != null && password != null)
+                {
+                    string message = "Password " + (result ? " Changed" : "Could Not Changed") + "  For Employee " + employee.Name + " " + employee.Surname;
+                    await _dbLogger.logInfo(message, GetUserName());
+                    _logger.LogInformation("SetEmployeeRole\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
+                }
+            }
+            return result;
         }
+
+        #endregion
+
     }
 }

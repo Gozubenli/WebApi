@@ -17,12 +17,13 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Data.OleDb;
 using System.Diagnostics;
+using WebApi.Controllers.Aplus;
 
 namespace WebApi.Aplus.Controllers
 {
     [Route("aplus/[controller]")]
     [ApiController]
-    public class UserApiController : ControllerBase
+    public class UserApiController : BaseApiController
     {
         private readonly ILogger<AddressApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
@@ -643,11 +644,6 @@ namespace WebApi.Aplus.Controllers
         {
             var i = RandomNumber(1, 4) + 1;
             return i + (i < 3 ? ".jpg" : ".png");
-        }
-
-        private string GetUserName()
-        {
-            return HttpContext.Session.GetString("UserName");
         }
 
         public static int RandomNumber(int min, int max)

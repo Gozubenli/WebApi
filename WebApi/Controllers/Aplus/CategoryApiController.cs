@@ -12,12 +12,13 @@ using Newtonsoft.Json;
 using WebApi.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using WebApi.Controllers.Aplus;
 
 namespace WebApi.Aplus.Controllers
 {
     [Route("aplus/[controller]")]
     [ApiController]
-    public class CategoryApiController : ControllerBase
+    public class CategoryApiController : BaseApiController
     {
         private readonly ILogger<CategoryApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
@@ -72,7 +73,7 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "Category " + category.Name + (result ? " Added" : "Could Not Added");
                 _logger.LogInformation("AddCategory\tParam: " + JsonConvert.SerializeObject(category) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             return result;
         }
@@ -110,7 +111,7 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "Category " + category.Name + (result ? " Updated" : "Could Not Updated");
                 _logger.LogInformation("UpdateCategory\tParam: " + JsonConvert.SerializeObject(category) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             _logger.LogInformation("UpdateCategory Result:" + result);
             return result;
@@ -151,14 +152,10 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "Category " + category.Name + (result ? " Deleted" : "Could Not Deleted");
                 _logger.LogInformation("DeleteCategory\tParam: " + JsonConvert.SerializeObject(category) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             return result;
         }
         
-        private string getUserName()
-        {
-            return HttpContext.Session.GetString("UserName");
-        }
     }
 }

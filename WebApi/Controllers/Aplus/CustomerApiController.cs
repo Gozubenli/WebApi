@@ -16,12 +16,13 @@ using WebApi.UiModels;
 using Newtonsoft.Json;
 using WebApi.Utils;
 using Microsoft.AspNetCore.Http;
+using WebApi.Controllers.Aplus;
 
 namespace WebApi.Aplus.Controllers
 {
     [Route("aplus/[controller]")]
     [ApiController]
-    public class CustomerApiController : ControllerBase
+    public class CustomerApiController : BaseApiController
     {
         private readonly ILogger<CustomerApiController> _logger;
         private DbLogger _dbLogger;
@@ -117,7 +118,7 @@ namespace WebApi.Aplus.Controllers
 
                 string message = "Customer " + customer.Name + " " + customer.Surname + (result ? " Added" : "Could Not Added");
                 _logger.LogInformation("AddCustomer\tParam: " + JsonConvert.SerializeObject(customer) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             return result;
         }
@@ -158,7 +159,7 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "Customer " + customer.Name + " " + customer.Surname + (result ? " Updated" : "Could Not Updated");
                 _logger.LogInformation("UpdateCustomer\tParam: " + JsonConvert.SerializeObject(customer) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             return result;
         }
@@ -198,7 +199,7 @@ namespace WebApi.Aplus.Controllers
                 if (customer != null && project != null)
                 {
                     string message = "Project " + project.Name + (result ? " Added" : "Could Not Added") + "  To Customer " + customer.Name + " " + customer.Surname;
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                     _logger.LogInformation("AddCustomerProject\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
@@ -246,16 +247,12 @@ namespace WebApi.Aplus.Controllers
                 if (customer != null && project != null)
                 {
                     string message = "Project " + project.Name + (result ? " Deleted" : "Could Not Deleted") + "  From Customer " + customer.Name + " " + customer.Surname;
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                     _logger.LogInformation("DeleteCustomerProject\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: " + result);
                 }
             }
             return result;
         }
 
-        private string getUserName()
-        {
-            return HttpContext.Session.GetString("UserName");
-        }
     }
 }

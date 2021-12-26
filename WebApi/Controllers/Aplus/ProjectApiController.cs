@@ -12,12 +12,13 @@ using WebApi.DbModels;
 using Newtonsoft.Json;
 using WebApi.Utils;
 using Microsoft.AspNetCore.Http;
+using WebApi.Controllers.Aplus;
 
 namespace WebApi.Aplus.Controllers
 {
     [Route("aplus/[controller]")]
     [ApiController]
-    public class ProjectApiController : ControllerBase
+    public class ProjectApiController : BaseApiController
     {
         private readonly ILogger<ProjectApiController> _logger;
         private DbLogger _dbLogger;
@@ -70,7 +71,7 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "Project " + project.Name + (result ? " Added" : "Could Not Added");
                 _logger.LogInformation("AddProject\tParam: " + JsonConvert.SerializeObject(project) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             return result;
         }
@@ -133,13 +134,9 @@ namespace WebApi.Aplus.Controllers
                 }
                 string message = "Project " + project.Name + (result ? " Deleted" : "Could Not Deleted");
                 _logger.LogInformation("DeleteProject\tParam: " + JsonConvert.SerializeObject(project) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
             }
             return result;
-        }
-        private string getUserName()
-        {
-            return HttpContext.Session.GetString("UserName");
         }
     }
 }

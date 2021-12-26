@@ -35,17 +35,17 @@ namespace WebApi.Utils
                 var apiName = arr[0]; // usernamePassword.Substring(0, seperatorIndex);
                 var apikey = arr[1]; // usernamePassword.Substring(seperatorIndex + 1);
 
-                if(arr.Length==3)
-                {
-                    context.Session.SetString("UserName", arr[2]);
-                }
-                else
-                {
-                    context.Session.SetString("UserName", "");
-                }
+                //if (arr.Length == 3)
+                //{
+                //    context.Session.SetString("UserName", arr[2]);
+                //}
+                //else
+                //{
+                //    context.Session.SetString("UserName", "");
+                //}
 
                 if (Singleton.Instance.ApiKey.Keys.Contains(apiName) && Singleton.Instance.ApiKey[apiName] == apikey)
-                {                    
+                {
                     await _next.Invoke(context);
                 }
                 else
@@ -59,7 +59,7 @@ namespace WebApi.Utils
                 context.Response.StatusCode = 401; //Unauthorized
                 return;
             }
-        }
+        }        
 
         //private async Task SignIn(string username, HttpContext context)
         //{

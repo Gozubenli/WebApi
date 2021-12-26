@@ -12,12 +12,13 @@ using WebApi.DbModels;
 using Newtonsoft.Json;
 using WebApi.Utils;
 using Microsoft.AspNetCore.Http;
+using WebApi.Controllers.Aplus;
 
 namespace WebApi.Aplus.Controllers
 {
     [Route("aplus/[controller]")]
     [ApiController]
-    public class WebSettingsApiController : ControllerBase
+    public class WebSettingsApiController : BaseApiController
     {
         private readonly ILogger<WebSettingsApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
@@ -93,7 +94,7 @@ namespace WebApi.Aplus.Controllers
 
                 string message = "WebSettings " + (result ? " Updated" : "Could Not Updated");
                 _logger.LogInformation("UpdateWebSettings\tParam: " + JsonConvert.SerializeObject(ws) + "\tResult: " + result);
-                await _dbLogger.logInfo(message, getUserName());
+                await _dbLogger.logInfo(message, GetUserName());
 
             }
             _logger.LogInformation("UpdateWebSettings Result:" + result);
@@ -125,11 +126,6 @@ namespace WebApi.Aplus.Controllers
                 _logger.LogError(ex.Message);
             }
             return resultList;
-        }
-
-        private string getUserName()
-        {
-            return HttpContext.Session.GetString("UserName");
         }
     }
 }

@@ -12,12 +12,13 @@ using WebApi.DbModels;
 using Newtonsoft.Json;
 using WebApi.Utils;
 using Microsoft.AspNetCore.Http;
+using WebApi.Controllers.Aplus;
 
 namespace WebApi.Aplus.Controllers
 {
     [Route("aplus/[controller]")]
     [ApiController]
-    public class AddressApiController : ControllerBase
+    public class AddressApiController : BaseApiController
     {
         private readonly ILogger<AddressApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
@@ -76,7 +77,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Address " + address.Name + (result ? " Added" : "Could Not Added") + " To Customer " + customer.Name + " " + customer.Surname;
                     _logger.LogInformation("AddAddress\tParam: " + JsonConvert.SerializeObject(address) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }                
             }
             return result;
@@ -122,7 +123,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Address " + address.Name + (result ? " Updated" : "Could Not Updated") + " For Customer " + customer.Name + " " + customer.Surname;
                     _logger.LogInformation("UpdateAddress\tParam: " + JsonConvert.SerializeObject(address) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             _logger.LogInformation("UpdateAddress Result:" + result);
@@ -162,7 +163,7 @@ namespace WebApi.Aplus.Controllers
                 {
                     string message = "Address " + address.Name + (result ? " Deleted" : "Could Not Deleted") + " From Customer " + customer.Name + " " + customer.Surname;
                     _logger.LogInformation("DeleteAddress\tParam: " + JsonConvert.SerializeObject(address) + "\tResult: " + result);
-                    await _dbLogger.logInfo(message, getUserName());
+                    await _dbLogger.logInfo(message, GetUserName());
                 }
             }
             return result;
@@ -192,9 +193,6 @@ namespace WebApi.Aplus.Controllers
             }
             return list;
         }
-        private string getUserName()
-        {
-            return HttpContext.Session.GetString("UserName");
-        }
+        
     }
 }
