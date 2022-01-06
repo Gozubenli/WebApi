@@ -17,5 +17,7 @@ namespace WebApi.UiModels
         public List<Work> WorkList { get; set; }
         [JsonProperty("rl")]
         public List<Role> RoleList { get; set; }
+        [JsonProperty("ll")]
+        public Location LastLocation { get; set; }
     }
 }

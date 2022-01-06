@@ -29,7 +29,7 @@ namespace WebApi.Utils
 
         public async void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            using (StreamWriter streamWriter = new StreamWriter(rootPath+"/log.log", true))
+            using (StreamWriter streamWriter = new StreamWriter(rootPath+"/api.log", true))
             {
                 await streamWriter.WriteLineAsync($"{DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss")} | {logLevel.ToString()} \t| {formatter(state, exception)}");
                 streamWriter.Close();

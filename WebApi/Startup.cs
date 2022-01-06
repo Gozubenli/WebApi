@@ -8,6 +8,7 @@ using WebApi.Data;
 using WebApi.Utils;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.IO;
 
 namespace WebApi
 {
@@ -45,7 +46,8 @@ namespace WebApi
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
         {
             var contentRoot = env.ContentRootPath;
-            loggerFactory.AddProvider(new LoggerProvider(contentRoot));
+            var parent = Directory.GetParent(contentRoot).FullName;
+            loggerFactory.AddProvider(new LoggerProvider(parent));
 
             if (env.IsDevelopment())
             {
@@ -90,51 +92,6 @@ namespace WebApi
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
 
-            //CreateRoles(serviceProvider);
         }
-
-        //private void CreateRoles(IServiceProvider serviceProvider)
-        //{
-        //    var RoleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
-        //    var UserManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        //    //serviceProvider.GetRequiredService<UserRoleManager>
-
-        //    string[] roleNames = { "Admin", "Manager", "Member" };
-        //    IdentityResult roleResult;
-
-        //    foreach (var roleName in roleNames)
-        //    {
-        //        var roleExist = RoleManager.RoleExistsAsync(roleName).Result;
-        //        if (!roleExist)
-        //        {
-        //            roleResult = RoleManager.CreateAsync(new ApplicationRole()
-        //            {
-        //                Name = roleName
-        //            }).Result;
-        //        }
-        //    }
-
-        //    //Here you could create a super user who will maintain the web app
-        //    var poweruser = new ApplicationUser
-        //    {
-
-        //        UserName = "Admin",
-        //        Email = "admin@webapptr.com",
-        //    };
-
-        //    string userPWD = "Admin_1.";
-        //    var _user = UserManager.FindByEmailAsync("admin@webapptr.com").Result;
-
-        //    if (_user == null)
-        //    {
-        //        var createPowerUser = UserManager.CreateAsync(poweruser, userPWD).Result;
-        //        if (createPowerUser.Succeeded)
-        //        {
-        //            //var v = UserManager.AddToRoleAsync(poweruser, "Admin").Result;
-        //        }
-               
-        //    }
-        //    var v = UserManager.AddToRoleAsync(poweruser, "Admin").Result;
-        //}
     }
 }

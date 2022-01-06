@@ -27,6 +27,7 @@ namespace WebApi.Data
         public DbSet<Log> Logs { get; set; }
         public DbSet<Title> Titles { get; set; }
         public DbSet<Employee_Role> Employee_Roles { get; set; }
+        public DbSet<Location> Locations { get; set; }
 
         public CrmDbContext(DbContextOptions<CrmDbContext> options) : base(options)
         {

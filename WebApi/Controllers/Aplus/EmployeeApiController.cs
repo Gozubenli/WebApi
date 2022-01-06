@@ -60,7 +60,7 @@ namespace WebApi.Aplus.Controllers
         public async Task<List<UiEmployeeModel>> GetEmployeeModelList([FromBody] JObject param)
         {
             List<UiEmployeeModel> resultList = new List<UiEmployeeModel>();
-            //DateTime startDate = DateTime.Today.AddDays(-7);
+            DateTime startDate = DateTime.Today.AddDays(-30);
             try
             {
                 using (var context = _contextFactory.CreateDbContext())
@@ -72,6 +72,7 @@ namespace WebApi.Aplus.Controllers
                     var employeeWorkList = await (from m in context.Employee_Works select m).ToListAsync();
                     var roleList = await (from m in context.Roles orderby m.Id select m).ToListAsync();
                     var employeeRoleList = await (from m in context.Employee_Roles select m).ToListAsync();
+                    var locationList = await (from m in context.Locations where m.CreatedDate > startDate select m).ToListAsync();
 
                     foreach (var employee in employeeList)
                     {
@@ -91,13 +92,19 @@ namespace WebApi.Aplus.Controllers
                                   where m.EmployeeId == employee.Id
                                   select n).ToList();
 
+                        var ll = (from m in locationList
+                                  where m.EmployeeId == employee.Id
+                                  orderby m.Id descending
+                                  select m).FirstOrDefault();
+
 
                         resultList.Add(new UiEmployeeModel()
                         {
                             Employee = employee,
                             GroupList = gl,
                             WorkList = wl,
-                            RoleList = rl
+                            RoleList = rl,
+                            LastLocation = ll,
                         });
                     }
                 }
@@ -1184,5 +1191,61 @@ namespace WebApi.Aplus.Controllers
 
         #endregion
 
+        #region Location
+        [HttpPost("GetLocationList")]
+        public async Task<List<Location>> GetLocationList([FromBody] JObject param)
+        {
+            List<Location> list = new List<Location>();
+            try
+            {
+                var employeeId = param["EmployeeId"];
+                if(employeeId!=null)
+                {
+                    int empId = Convert.ToInt32(employeeId);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        list = await (from m in context.Locations where m.EmployeeId == empId select m).ToListAsync();
+                    }
+                }
+               
+                _logger.LogInformation("GetLocationList Count:" + list.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return list;
+        }
+
+        [HttpPost("AddLocation")]
+        public async Task<bool> AddLocation([FromBody] Location location)
+        {
+            _logger.LogInformation("Location: " + JsonConvert.SerializeObject(location));
+            bool result = false;
+            if (location != null)
+            {
+                try
+                {
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        var dbResult = context.Locations.Add(location);
+                        await context.SaveChangesAsync();
+                        result = dbResult != null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+                if (location != null)
+                {
+                    string message = JsonConvert.SerializeObject(location) + (result ? " Added" : "Could Not Added");
+                    _logger.LogInformation("AddLocation\tParam: " + JsonConvert.SerializeObject(location) + "\tResult: " + result);
+                    await _dbLogger.logInfo(message, GetUserName());
+                }
+            }
+            return result;
+        }
+        #endregion
     }
 }
