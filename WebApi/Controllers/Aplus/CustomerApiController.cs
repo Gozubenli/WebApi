@@ -94,6 +94,31 @@ namespace WebApi.Aplus.Controllers
             return resultList;
         }
 
+        [HttpPost("GetCustomer")]
+        public async Task<Customer> GetCustomer([FromBody] JObject param)
+        {
+            Customer customer = new Customer();
+            try
+            {
+                var email = param["Email"];
+                if (email!=null)
+                {
+                    var p1 = email.ToString();
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        customer = await (from m in context.Customers where m.Email == p1 select m).FirstOrDefaultAsync();
+                    }
+
+                }
+                _logger.LogInformation("GetCustomer\tParam: " + JsonConvert.SerializeObject(customer) + "\tResult: " + customer);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return customer;
+        }
+
         [HttpPost("AddCustomer")]
         public async Task<bool> AddCustomer([FromBody] Customer customer)
         {

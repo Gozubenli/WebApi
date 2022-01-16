@@ -506,6 +506,33 @@ namespace WebApi.Aplus.Controllers
 
             return user;
         }
+
+        [HttpPost("IsEmployee")]
+        public async Task<bool> IsEmployee([FromBody] JObject param)
+        {
+            bool result = false;
+            try
+            {
+                var email = param["Email"];
+                if(email != null)
+                {
+                    var emailStr = email.ToString();
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        var employee = (from m in context.Employees where m.Email == emailStr select m).FirstOrDefault();
+                        if(employee != null)
+                        {
+                            result = true;
+                        }
+                    }
+                }                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return result;
+        }
         #endregion
 
         #region Groups
