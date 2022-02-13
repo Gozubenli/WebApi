@@ -25,7 +25,7 @@ namespace WebApi.Aplus.Controllers
     [ApiController]
     public class UserApiController : BaseApiController
     {
-        private readonly ILogger<AddressApiController> _logger;
+        private readonly ILogger<UserApiController> _logger;
         private readonly IDbContextFactory<CrmDbContext> _contextFactory;
         private DbLogger _dbLogger;
 
@@ -33,7 +33,7 @@ namespace WebApi.Aplus.Controllers
         private static readonly object syncLock = new object();
 
 
-        public UserApiController(ILogger<AddressApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
+        public UserApiController(ILogger<UserApiController> logger, IDbContextFactory<CrmDbContext> contextFactory)
         {
             _logger = logger;
             _contextFactory = contextFactory;
@@ -233,7 +233,7 @@ namespace WebApi.Aplus.Controllers
             HttpResponseMessage response = client.GetAsync("/users").Result;  // Blocking call! Program will wait here until a response is received or a timeout occurs.
             if (response.IsSuccessStatusCode)
             {
-                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<TestData>>(response.Content.ReadAsStringAsync().Result);                
+                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<TestData>>(response.Content.ReadAsStringAsync().Result);
             }
             else
             {
@@ -242,6 +242,7 @@ namespace WebApi.Aplus.Controllers
             client.Dispose();
             return list;
         }
+
 
         [HttpPost("TestData")]
         public async Task<bool> TestData([FromBody] JObject param)

@@ -25,6 +25,14 @@ namespace WebApi
         {
             string mySqlConnectionStr = Configuration.GetConnectionString("DefaultConnection");
             //services.AddDbContextPool<CrmDbContext>(options => options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr)));
+
+
+            //Sql Server Baglantisi
+            //string sqlServerConnection = Configuration.GetConnectionString("SqlServerConnection");
+            //services.AddDbContextFactory<abkmcomt_aplusContext>(options =>
+            //options.UseSqlServer(sqlServerConnection, o => o.CommandTimeout(30)));
+
+
             services.AddDbContextFactory<CrmDbContext>(options => options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr)));
             services.AddAuthorization();
             services.AddControllersWithViews().AddNewtonsoftJson(options =>
@@ -40,7 +48,10 @@ namespace WebApi
             services.AddMemoryCache();
             services.AddCors();
             services.AddSession();
-            services.AddResponseCompression();           
+            services.AddResponseCompression();
+
+
+            
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
