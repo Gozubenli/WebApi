@@ -156,6 +156,70 @@ namespace WebApi.Aplus.Controllers
             }
             return result;
         }
-        
+
+        [HttpPost("GetOptionList")]
+        public async Task<List<Option>> GetOptionList([FromBody] JObject param)
+        {
+            List<Option> list = new List<Option>();
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    list = await (from m in context.Options select m).ToListAsync();
+                }
+                _logger.LogInformation("GetOptionList Count:" + list.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return list;
+        }
+
+        //[HttpPost("GetCategoryOptionList")]
+        //public async Task<List<Category_Option>> GetCategoryOptionList([FromBody] JObject param)
+        //{
+        //    List<Category_Option> list = new List<Category_Option>();
+        //    try
+        //    {
+        //        using (var context = _contextFactory.CreateDbContext())
+        //        {
+        //            list = await (from m in context.Category_Options select m).ToListAsync();
+        //        }
+        //        _logger.LogInformation("GetCategoryOptionList Count:" + list.Count);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex.Message);
+        //    }
+        //    return list;
+        //}
+
+        [HttpPost("GetCategoryOptionList")]
+        public async Task<List<Option>> GetCategoryOptionList([FromBody] JObject param)
+        {
+            List<Option> list = new List<Option>();
+            var cat = param["CategoryId"];
+            try
+            {
+                if (cat != null)
+                {
+                    int categoryId = Convert.ToInt32(cat);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        list = await (from m in context.Options
+                                      join n in context.Category_Options on m.Id equals n.OptionId
+                                      where n.CategoryId == categoryId
+                                      select m).ToListAsync();
+                    }
+                }
+                _logger.LogInformation("GetCategoryOptionList Count:" + list.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return list;
+        }
     }
 }

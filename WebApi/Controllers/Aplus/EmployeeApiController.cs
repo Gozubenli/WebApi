@@ -399,7 +399,7 @@ namespace WebApi.Aplus.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
             }
 
             return File(image, "image/" + Path.GetExtension(path).Replace(".", ""));

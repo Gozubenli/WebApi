@@ -16,5 +16,7 @@ namespace WebApi.DbModels
         public string Description { get; set; }
         [JsonProperty("i")]
         public string Image { get; set; }
+        [JsonProperty("p")]
+        public int Price { get; set; }
     }
 }
