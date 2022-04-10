@@ -101,14 +101,25 @@ namespace WebApi.Aplus.Controllers
             try
             {
                 var email = param["Email"];
+                var phone = param["Phone"];
+
                 if (email!=null)
                 {
-                    var p1 = email.ToString();
+                    var p1 = email.ToString().ToLower();
                     using (var context = _contextFactory.CreateDbContext())
                     {
-                        customer = await (from m in context.Customers where m.Email == p1 select m).FirstOrDefaultAsync();
+                        customer = await (from m in context.Customers where m.Email.ToLower() == p1 select m).FirstOrDefaultAsync();
                     }
-
+                }
+                else if(phone != null)
+                {
+                    var p1 = phone.ToString();
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        customer = context.Customers.FromSqlRaw("SELECT * FROM Customers WHERE Telephone LIKE '%"+ p1.Substring(p1.Length - 7)+"'").FirstOrDefault();
+                        //customer = await (from m in context.Customers where m.Telephone.Substring(m.Telephone.Length - 7) == p1.Substring(m.Telephone.Length - 7) select m).FirstOrDefaultAsync();                        
+                        //customer = await (from m in context.Customers where m.Telephone.Replace("(", string.Empty).Replace(")", string.Empty).Replace("+", string.Empty) == p1 select m).FirstOrDefaultAsync();
+                    }
                 }
                 _logger.LogInformation("GetCustomer\tParam: " + JsonConvert.SerializeObject(customer) + "\tResult: " + customer);
             }
