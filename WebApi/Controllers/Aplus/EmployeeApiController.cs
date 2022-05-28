@@ -514,7 +514,9 @@ namespace WebApi.Aplus.Controllers
             try
             {
                 var email = param["Email"];
-                if(email != null)
+                var phone = param["Phone"];
+             
+                if (email != null)
                 {
                     var emailStr = email.ToString();
                     using (var context = _contextFactory.CreateDbContext())
@@ -525,7 +527,58 @@ namespace WebApi.Aplus.Controllers
                             result = true;
                         }
                     }
-                }                
+                }
+                else if (phone != null && !string.IsNullOrWhiteSpace(phone.ToString()))
+                {
+                    var p1 = phone.ToString();
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        if (p1.Length > 7)
+                        {
+                            var employee = context.Employees.FromSqlRaw("SELECT * FROM Employees WHERE Telephone LIKE '%" + p1.Substring(p1.Length - 7) + "'").FirstOrDefault();
+                            if (employee != null)
+                            {
+                                result = true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return result;
+        }
+
+        [HttpPost("GetEmployee")]
+        public async Task<Employee> GetEmployee([FromBody] JObject param)
+        {
+            Employee result = null;
+            try
+            {
+                var email = param["Email"];
+                var phone = param["Phone"];
+
+                if (email != null)
+                {
+                    var emailStr = email.ToString();
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        result = await (from m in context.Employees where m.Email == emailStr select m).FirstOrDefaultAsync();                        
+                    }
+                }
+                else if (phone != null && !string.IsNullOrWhiteSpace(phone.ToString()))
+                {
+                    var p1 = phone.ToString();
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        if (p1.Length > 7)
+                        {
+                            result = await context.Employees.FromSqlRaw("SELECT * FROM Employees WHERE Telephone LIKE '%" + p1.Substring(p1.Length - 7) + "'").FirstOrDefaultAsync();                            
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {

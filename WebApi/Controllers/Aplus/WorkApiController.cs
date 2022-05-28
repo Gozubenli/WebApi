@@ -213,6 +213,34 @@ namespace WebApi.Aplus.Controllers
             return list;
         }
 
+        [HttpPost("GetEmployeeWorkList")]
+        public async Task<List<Work>> GetEmployeeWorkList([FromBody] JObject param)
+        {
+            List<Work> list = new List<Work>();
+            try
+            {
+                if (param["EmployeeId"] != null)
+                {
+                    int employeeId = Convert.ToInt32(param["EmployeeId"]);
+                    DateTime dateTime = DateTime.Today.AddDays(-10);
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        list = await (from m in context.Works
+                                      join n in context.Employee_Works on m.Id equals n.WorkId
+                                      where n.EmployeeId == employeeId && m.PlannedDateTime>dateTime                                    
+                                      orderby m.PlannedDateTime descending
+                                      select m).ToListAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
+            }
+            return list;
+        }
+
         [HttpPost("GetCategoryWorkList")]
         public async Task<List<Work>> GetCategoryWorkList([FromBody] JObject param)
         {
