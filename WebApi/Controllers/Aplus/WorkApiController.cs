@@ -145,6 +145,49 @@ namespace WebApi.Aplus.Controllers
             return result;
         }
 
+        [HttpPost("UpdateWorkStatus")]
+        public async Task<bool> UpdateWorkStatus([FromBody] JObject param)
+        {
+            _logger.LogInformation("UpdateWorkStatus: " + JsonConvert.SerializeObject(param));
+            bool result = false;
+
+            //var v = param["WorkStatus"];
+
+            if (param["WorkId"] != null && param["WorkStatus"] != null)
+            {
+                int workId = Convert.ToInt32(param["WorkId"].ToString());
+                string workStatus = param["WorkStatus"].ToString();
+                WorkStatus status = (WorkStatus)Enum.Parse(typeof(WorkStatus), workStatus);
+                try
+                {
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        var existing = context.Works.FirstOrDefault(o => o.Id == workId);
+                        if (existing != null)
+                        {
+                            existing.WorkStatus = status;                           
+                            existing.UpdateDate = DateTime.UtcNow;
+                            int dbResult = await context.SaveChangesAsync();
+                            result = dbResult > 0;
+                        }
+                        else
+                        {
+                            _logger.LogError("UpdateWorkStatus Not Found");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+                string message = "Work Status Updated\tParam: " + JsonConvert.SerializeObject(param) + "\tResult: "+result;
+                _logger.LogInformation(message + "\tResult: " + result);
+                await _dbLogger.logInfo(message, GetUserName());
+            }
+            _logger.LogInformation("UpdateWork Result:" + result);
+            return result;
+        }
+
         [HttpPost("DeleteWork")]
         public async Task<bool> DeleteWork([FromBody] Work work)
         {

@@ -1297,6 +1297,27 @@ namespace WebApi.Aplus.Controllers
             return list;
         }
 
+        [HttpPost("GetLastLocationList")]
+        public async Task<List<Location>> GetLastLocationList([FromBody] JObject param)
+        {
+            List<Location> list = new List<Location>();
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    list = await context.Locations.FromSqlRaw("SELECT * FROM Locations l1 WHERE Id in( SELECT max(Id) from Locations where CreatedDate > curdate()-7 group by EmployeeId)").ToListAsync();                   
+                }
+
+                _logger.LogInformation("GetLastLocationList Count:" + list.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return list;
+        }
+
+
         [HttpPost("AddLocation")]
         public async Task<bool> AddLocation([FromBody] Location location)
         {
