@@ -43,5 +43,7 @@ namespace WebApi.DbModels
         public int? WorkPeriodRecurringType { get; set; }
         [JsonProperty("wprd")]
         public string WorkPeriodRecurringDays { get; set; }
+        [JsonProperty("in")]
+        public string Notes { get; set; }
     }
 }

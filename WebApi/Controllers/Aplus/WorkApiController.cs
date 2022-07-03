@@ -118,6 +118,7 @@ namespace WebApi.Aplus.Controllers
                             existing.WorkPeriodRecurringDays = work.WorkPeriodRecurringDays;
                             existing.WorkPeriodRecurringType = work.WorkPeriodRecurringType;
                             existing.WorkPeriodRootId = work.WorkPeriodRootId;
+                            existing.Notes = work.Notes;
 
                             existing.UpdateDate = DateTime.UtcNow;
                             int dbResult = await context.SaveChangesAsync();
@@ -361,7 +362,8 @@ namespace WebApi.Aplus.Controllers
                                     WorkStatus = WorkStatus.New,
                                     WorkTime = work.WorkTime,
                                     WorkType = WorkType.Regular,
-                                    WorkPeriodRootId = work.Id
+                                    WorkPeriodRootId = work.Id,
+                                    Notes = work.Notes                                    
                                 };
 
                                 context.Works.Add(subWork);
@@ -393,7 +395,8 @@ namespace WebApi.Aplus.Controllers
                                                 WorkStatus = WorkStatus.New,
                                                 WorkTime = work.WorkTime,
                                                 WorkType = WorkType.Regular,
-                                                WorkPeriodRootId = work.Id
+                                                WorkPeriodRootId = work.Id,
+                                                Notes = work.Notes
                                             };
 
                                             context.Works.Add(subWork);
